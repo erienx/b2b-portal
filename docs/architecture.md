@@ -86,7 +86,6 @@ System będzie zbudowany w architekturze 3-warstwowej z wyraźnym podziałem odp
 
 - Indeksy na często wyszukiwanych kolumnach
 - Ograniczenia integralności danych
-- Partycjonowanie tabel logów (jeśli potrzebne)
 
 ### 4. Przechowywanie plików
 
@@ -153,7 +152,7 @@ Admin → Frontend → Backend (Export API) → Database → CSV File → Downlo
 
 ### Ochrona danych
 
-- Hashowanie haseł (bcrypt)
+- Hashowanie haseł (argon2)
 - Walidacja i sanityzacja wszystkich inputów
 - Parametryzowane zapytania SQL (TypeORM)
 - Logowanie operacji wrażliwych
@@ -175,31 +174,12 @@ Admin → Frontend → Backend (Export API) → Database → CSV File → Downlo
 - 1-2 jednoczesnych użytkowników
 - Niewielka ilość danych
 
-### Przyszła rozbudowa
-
-- Horizontal scaling backend (load balancer)
-- Database read replicas
-- CDN dla plików statycznych
-- Caching layer (Redis)
-
 ## Deployment
 
-### Środowiska
+### Infrastruktura
 
-- **Development** - lokalne środowisko programistów
-- **Staging** - środowisko testowe
-- **Production** - środowisko produkcyjne
-
-### Infrastruktura (sugerowana)
-
-- **Backend**: Node.js server (PM2 process manager)
+- **Backend**: Node.js server
 - **Database**: PostgreSQL server
 - **Frontend**: Static files (nginx)
 - **Files**: Local file system (początkowo)
 
-### CI/CD Pipeline
-
-- Automatyczne testy jednostkowe i integracyjne
-- Automatyczny deployment na staging
-- Manualny deployment na production
-- Database migrations
