@@ -4,7 +4,6 @@ import { AppModule } from 'src/app.module';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { UsersService } from 'src/users/users.service';
 
-
 async function seed() {
     const app = await NestFactory.createApplicationContext(AppModule);
     const usersService = app.get(UsersService);
@@ -60,8 +59,13 @@ async function seed() {
 
         for (const userData of demoUsers) {
             const existingUser = await usersService.findByEmail(userData.email);
+
             if (!existingUser) {
-                const user = await usersService.create(userData);
+
+                const user = await usersService.create({
+                    ...userData,
+                });
+
                 console.log(`Demo user created: ${user.email} (${user.role})`);
             } else {
                 console.log(`Demo user already exists: ${userData.email}`);
