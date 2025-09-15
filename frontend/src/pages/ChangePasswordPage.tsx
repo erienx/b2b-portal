@@ -11,7 +11,11 @@ import { Lock } from 'lucide-react';
 
 const schema = z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(8, 'New password must be at least 8 characters long'),
+    newPassword: z
+        .string()
+        .min(8, 'Password must be at least 8 characters long')
+        .regex(/[0-9]/, 'Password must contain at least one digit')
+        .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character'),
 });
 
 type FormFields = z.infer<typeof schema>;
@@ -33,12 +37,13 @@ export default function ChangePasswordPage() {
         try {
             await handleChangePassword(data.currentPassword, data.newPassword);
             navigate('/dashboard');
-        } catch (err) {
-            if (err instanceof Error) {
-                setError('root', { message: err.message });
-            } else {
-                setError('root', { message: 'Password change failed' });
-            }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+            const message =
+                err?.response?.data?.message ||
+                err?.message ||
+                'Password change failed';
+            setError('root', { message });
         }
     };
 

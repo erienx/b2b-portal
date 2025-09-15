@@ -42,6 +42,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         try {
             const { user, accessToken } = await authApi.login({ email, password });
             localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('user', JSON.stringify(user));
             setAuthToken(accessToken);
             setCurrentUser(user);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -11,14 +11,14 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 export interface User {
     id: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: UserRole;
-    is_active: boolean;
-    is_locked: boolean;
-    must_change_password: boolean;
-    created_at: string;
-    updated_at: string;
+    isActive: boolean;
+    isLocked: boolean;
+    mustChangePassword: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface LoginDto {

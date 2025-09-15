@@ -40,7 +40,7 @@ export default function LoginForm() {
             await handleLogin(data.email, data.password);
 
             const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-            if (storedUser?.must_change_password) {
+            if (storedUser?.mustChangePassword) {
                 navigate('/change-password');
             } else {
                 navigate('/dashboard');

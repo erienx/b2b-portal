@@ -17,7 +17,7 @@ const HomePage = () => {
             <div className="min-h-screen flex items-center justify-center bg-bg">
                 <div className="bg-surface p-8 rounded-2xl shadow-lg text-center">
                     <h1 className="text-3xl font-bold text-white mb-4">
-                        Welcome, {currentUser.first_name}!
+                        Welcome, {currentUser.firstName}!
                     </h1>
                     <p className="text-grey mb-6">You are already logged in.</p>
                     <Link
