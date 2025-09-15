@@ -1,10 +1,78 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import AuthProvider from './context/AuthProvider';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginForm from './components/auth/LoginForm';
+import { UserRole } from './types/auth';
+import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import AdminPage from './pages/AdminPage';
+import ExportManagerPage from './pages/ExportManagerPage';
+import NotFoundPage from './pages/NotFoundPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
+import './index.css';
+
+
+
+const router = createBrowserRouter([
+
+
+  {
+    path: '/',
+    element: <HomePage />,
+  },
+  {
+    path: 'dashboard',
+    element: (
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: 'admin',
+    element: (
+      <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
+        <AdminPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: 'export-manager',
+    element: (
+      <ProtectedRoute
+        allowedRoles={[
+          UserRole.EXPORT_MANAGER,
+          UserRole.ADMIN,
+          UserRole.SUPER_ADMIN
+        ]}
+      >
+        <ExportManagerPage />
+      </ProtectedRoute>
+    ),
+  },
+
+
+  {
+    path: '/login',
+    element: <LoginForm />,
+  },
+  {
+    path: '/change-password',
+    element: <ChangePasswordPage />,
+  },
+
+  {
+    path: '*',
+    element: <NotFoundPage />,
+  },
+]);
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+  <React.StrictMode>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  </React.StrictMode>,
+);
