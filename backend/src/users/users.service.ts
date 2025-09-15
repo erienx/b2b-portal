@@ -47,6 +47,9 @@ export class UsersService {
             last_name: lastName,
             role: role || UserRole.EMPLOYEE,
             must_change_password: true,
+            failed_login_attempts: 0,
+            is_locked: false,
+            is_active: true,
         });
 
         const savedUser = await this.userRepository.save(user);

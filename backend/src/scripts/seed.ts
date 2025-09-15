@@ -24,7 +24,7 @@ async function seed() {
 
             console.log('Super admin created successfully:', superAdmin.email);
         } else {
-            console.log('ℹSuper admin already exists');
+            console.log('Super admin already exists');
         }
 
         const demoUsers = [

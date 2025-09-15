@@ -1,4 +1,3 @@
-
 jest.mock('argon2', () => ({
   hash: jest.fn().mockResolvedValue('$argon2id$v=19$mockhash'),
   verify: jest.fn().mockResolvedValue(true),
@@ -95,44 +94,12 @@ describe('AuthService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('register', () => {
-    it('should successfully register a new user', async () => {
-      const registerDto = {
-        email: 'newuser@example.com',
-        password: 'Password123!',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        role: UserRole.EMPLOYEE,
-      };
-
-      mockUserRepository.findOne.mockResolvedValue(null);
-      mockUserRepository.create.mockReturnValue(mockUser);
-      mockUserRepository.save.mockResolvedValue(mockUser);
-      mockJwtService.sign.mockReturnValue('mock-jwt-token');
-      mockConfigService.get.mockReturnValue('mock-refresh-secret');
-      mockActivityLogRepository.create.mockReturnValue({});
-      mockActivityLogRepository.save.mockResolvedValue({});
-
-      const result = await service.register(registerDto);
-
-      expect(result).toHaveProperty('user');
-      expect(result).toHaveProperty('accessToken');
-      expect(result).toHaveProperty('refreshToken');
-      expect(result.user).not.toHaveProperty('password_hash');
-    });
-  });
-
   describe('login', () => {
     it('should successfully login with valid credentials', async () => {
       const loginDto = {
         email: 'test@example.com',
         password: 'Password123!',
       };
-
-      jest.mock('argon2', () => ({
-        hash: jest.fn().mockResolvedValue('hashedPassword'),
-        verify: jest.fn().mockResolvedValue(true),
-      }));
 
       mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockJwtService.sign.mockReturnValue('mock-jwt-token');
@@ -143,9 +110,9 @@ describe('AuthService', () => {
       const result = await service.login(loginDto);
 
       expect(result).toHaveProperty('user');
+      expect(result.user.mustChangePassword).toBe(false);
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
-      expect(result.user).not.toHaveProperty('password_hash');
     });
   });
 

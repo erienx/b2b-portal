@@ -7,31 +7,12 @@ import { GetUser } from './decorators/get-user.decorator';
 import { User } from 'src/common/entities/user.entity';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
-    @Post('register')
-    async register(
-        @Body() registerDto: RegisterDto,
-        @Res({ passthrough: true }) response: Response,
-    ) {
-        const result = await this.authService.register(registerDto);
 
-        response.cookie('refreshToken', result.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
-        });
-
-        return {
-            user: result.user,
-            accessToken: result.accessToken,
-        };
-    }
 
     @Post('login')
     @HttpCode(HttpStatus.OK)

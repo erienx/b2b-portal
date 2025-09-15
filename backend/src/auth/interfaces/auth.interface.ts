@@ -12,8 +12,19 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
+export interface SanitizedUser {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    isActive: boolean;
+    isLocked: boolean;
+    mustChangePassword: boolean;
+}
+
 export interface AuthResponse {
-    user: Partial<User>;
+    user: SanitizedUser;
     accessToken: string;
     refreshToken: string;
 }

@@ -5,13 +5,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as argon2 from 'argon2';
 
-import { JwtPayload, TokenResponse, AuthResponse } from './interfaces/auth.interface';
+import { JwtPayload, TokenResponse, AuthResponse, SanitizedUser } from './interfaces/auth.interface';
 import { User } from 'src/common/entities/user.entity';
 import { UserAction } from 'src/common/enums/user-action.enum';
-import { UserRole } from 'src/common/enums/user-role.enum';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
 import { UserActivityLog } from 'src/common/entities/user-activity-log.entity';
 
 @Injectable()
@@ -25,48 +23,12 @@ export class AuthService {
         private readonly configService: ConfigService,
     ) { }
 
-    async register(registerDto: RegisterDto): Promise<AuthResponse> {
-        const { email, password, firstName, lastName, role } = registerDto;
 
-        const existingUser = await this.userRepository.findOne({
-            where: { email: email.toLowerCase() },
-        });
-
-        if (existingUser) {
-            throw new ConflictException('User with this email already exists');
-        }
-
-        this.validatePassword(password);
-
-        const passwordHash = await argon2.hash(password);
-
-        const user = this.userRepository.create({
-            email: email.toLowerCase(),
-            password_hash: passwordHash,
-            first_name: firstName,
-            last_name: lastName,
-            role: role || UserRole.EMPLOYEE,
-            password_changed_at: new Date(),
-            must_change_password: false,
-        });
-
-        const savedUser = await this.userRepository.save(user);
-
-        await this.logUserActivity(savedUser.id, UserAction.LOGIN, 'User registered');
-        const tokens = await this.generateTokens(savedUser);
-
-        return {
-            user: this.sanitizeUser(savedUser),
-            ...tokens,
-        };
-    }
 
     async login(loginDto: LoginDto): Promise<AuthResponse> {
         const { email, password } = loginDto;
 
-        const user = await this.userRepository.findOne({
-            where: { email: email.toLowerCase() },
-        });
+        const user = await this.userRepository.findOne({ where: { email: email.toLowerCase() } });
 
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
@@ -81,16 +43,13 @@ export class AuthService {
         }
 
         const isPasswordValid = await argon2.verify(user.password_hash, password);
-
         if (!isPasswordValid) {
             await this.handleFailedLogin(user);
             throw new UnauthorizedException('Invalid credentials');
         }
 
         if (user.failed_login_attempts > 0) {
-            await this.userRepository.update(user.id, {
-                failed_login_attempts: 0,
-            });
+            await this.userRepository.update(user.id, { failed_login_attempts: 0 });
         }
 
         await this.logUserActivity(user.id, UserAction.LOGIN, 'Successful login');
@@ -215,9 +174,17 @@ export class AuthService {
         }
     }
 
-    private sanitizeUser(user: User): Partial<User> {
-        const { password_hash, ...sanitizedUser } = user;
-        return sanitizedUser;
+    private sanitizeUser(user: User): SanitizedUser {
+        return {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            isActive: user.is_active,
+            isLocked: user.is_locked,
+            mustChangePassword: user.must_change_password,
+        };
     }
 
     private async logUserActivity(
