@@ -1,18 +1,19 @@
 import { Package } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import LogOutButton from "../LogOutButton";
+import { Link } from "react-router-dom";
 
 export default function Header() {
     const { currentUser } = useAuth();
 
     return (
-        <header className="bg-surface border-b border-surfaceLight sticky top-0 z-50">
+        <header className="bg-surface border-b border-surfaceLight z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between py-4">
-                    <div className="flex items-center space-x-3">
+                    <Link className="flex items-center space-x-3" to={"/dashboard"}>
                         <Package className="h-8 w-8 text-accent-bg" />
                         <h1 className="text-xl font-bold text-white">B2B Portal</h1>
-                    </div>
+                    </Link>
                     {currentUser && (
                         <div className="flex items-center space-x-4">
                             <div className="text-right">

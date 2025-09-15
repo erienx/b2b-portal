@@ -18,6 +18,7 @@ import { CurrencyModule } from './currency/currency.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     AdminModule,
     ExportsModule,
     CurrencyModule,
+    LogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -17,6 +17,8 @@ import ChangePasswordPage from "./pages/ChangePasswordPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import MainLayout from "./layouts/MainLayout";
 import "./index.css";
+import LogsPage from "./pages/LogsPage";
+import SalesChannelsPage from "./pages/SalesChannelsPage";
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +42,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "logs",
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+            <LogsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "export-manager",
         element: (
           <ProtectedRoute
@@ -50,6 +60,14 @@ export const router = createBrowserRouter([
             ]}
           >
             <ExportManagerPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "sales-channels",
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.DISTRIBUTOR, UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
+            <SalesChannelsPage />
           </ProtectedRoute>
         ),
       },

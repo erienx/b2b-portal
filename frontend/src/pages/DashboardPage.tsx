@@ -2,18 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useHasAccess } from '../hooks/useHasAccess';
 import { UserRole } from '../types/auth';
-import {
-    BarChart3,
-    FileText,
-    Image,
-    Users,
-    TrendingUp,
-    Package,
-    Globe,
-    Activity,
-    Shield,
-    User
-} from 'lucide-react';
+import { BarChart3, FileText, Image, Users, TrendingUp, Package, Globe, Activity, Shield, } from 'lucide-react';
 
 interface DashboardCard {
     title: string;
@@ -99,7 +88,7 @@ function DashboardPage() {
             title: "Activity Logs",
             description: "View system activity and user audit logs",
             icon: Activity,
-            path: "/admin/logs",
+            path: "/logs",
             requiredRoles: [UserRole.SUPER_ADMIN],
             bgColor: "bg-red-500/10",
             iconColor: "text-red-500",
