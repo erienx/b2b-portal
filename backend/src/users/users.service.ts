@@ -94,7 +94,7 @@ export class UsersService {
             throw new NotFoundException('User not found');
         }
 
-        return this.sanitizeUser(user);
+        return user;
     }
 
     async findByEmail(email: string): Promise<User | null> {
@@ -183,28 +183,56 @@ export class UsersService {
         }
     }
 
-    async unlockAccount(id: string, unlockerId: string): Promise<void> {
-        const user = await this.userRepository.findOne({ where: { id } });
-
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-
-        if (!user.is_locked) {
-            throw new BadRequestException('Account is not locked');
-        }
-
-        await this.userRepository.update(id, {
-            is_locked: false,
-            failed_login_attempts: 0,
+    async getAllActivity(
+        page = 1,
+        limit = 50
+    ): Promise<{ logs: UserActivityLog[], total: number, totalPages: number }> {
+        const [logs, total] = await this.activityLogRepository.findAndCount({
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { created_at: 'DESC' },
+            relations: ['user']
         });
+
+        return {
+            logs,
+            total,
+            totalPages: Math.ceil(total / limit)
+        };
+    }
+
+    async unlockAccount(id: string, unlockerId: string): Promise<User> {
+        const unlocker = await this.userRepository.findOne({ where: { id: unlockerId } });
+        const user = await this.findOne(id);
+        if (!unlocker) {
+            throw new NotFoundException('Unlocker not found');
+        }
+
+        if (!this.canUnlockUser(unlocker.role, user.role)) {
+            throw new ForbiddenException(
+                `Users with role ${unlocker.role} cannot unlock accounts with role ${user.role}. ` +
+                'Contact a user with higher privileges.'
+            );
+        }
+        console.log('Unlocking user:', user);
+        if (!user.is_locked) {
+            throw new BadRequestException('User account is not locked');
+        }
+
+        user.is_locked = false;
+        user.failed_login_attempts = 0;
+
+        const savedUser = await this.userRepository.save(user);
 
         await this.logUserActivity(
             unlockerId,
             UserAction.LOGIN,
-            `Unlocked account: ${user.email}`,
+            `Unlocked account for : ${user.email}`,
         );
+
+        return savedUser;
     }
+
 
     async resetPassword(id: string, newPassword: string, reseterId: string): Promise<void> {
         const user = await this.userRepository.findOne({ where: { id } });
@@ -249,6 +277,51 @@ export class UsersService {
         };
     }
 
+    async getLockedUsers(): Promise<User[]> {
+        return await this.userRepository.find({
+            where: { is_locked: true },
+            order: { updated_at: 'DESC' }
+        });
+    }
+
+    private canManageRole(managerRole: UserRole, targetRole: UserRole): boolean {
+        const roleHierarchy = {
+            [UserRole.SUPER_ADMIN]: 5,
+            [UserRole.ADMIN]: 4,
+            [UserRole.EXPORT_MANAGER]: 3,
+            [UserRole.DISTRIBUTOR]: 2,
+            [UserRole.EMPLOYEE]: 1,
+        };
+
+        return roleHierarchy[managerRole] > roleHierarchy[targetRole];
+    }
+
+    private canUnlockUser(unlockerRole: UserRole, lockedUserRole: UserRole): boolean {
+        const unlockPermissions: { [key in UserRole]: UserRole[] } = {
+            [UserRole.SUPER_ADMIN]: [
+                UserRole.ADMIN,
+                UserRole.EXPORT_MANAGER,
+                UserRole.DISTRIBUTOR,
+                UserRole.EMPLOYEE
+            ],
+            [UserRole.ADMIN]: [
+                UserRole.EXPORT_MANAGER,
+                UserRole.DISTRIBUTOR,
+                UserRole.EMPLOYEE
+            ],
+            [UserRole.EXPORT_MANAGER]: [
+                UserRole.DISTRIBUTOR,
+                UserRole.EMPLOYEE
+            ],
+            [UserRole.DISTRIBUTOR]: [
+                UserRole.EMPLOYEE
+            ],
+            [UserRole.EMPLOYEE]: []
+        };
+
+        return unlockPermissions[unlockerRole]?.includes(lockedUserRole) || false;
+    }
+
     private validatePassword(password: string): void {
         if (password.length < 8) {
             throw new BadRequestException('Password must be at least 8 characters long');
@@ -266,9 +339,21 @@ export class UsersService {
         }
     }
 
-    private sanitizeUser(user: User): User {
-        const { password_hash, ...sanitizedUser } = user;
-        return sanitizedUser as User;
+    private sanitizeUser(user: User): any {
+        const { password_hash, ...rest } = user;
+
+        return {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            isActive: user.is_active,
+            isLocked: user.is_locked,
+            mustChangePassword: user.must_change_password,
+            createdAt: user.created_at,
+            updatedAt: user.updated_at,
+        };
     }
 
     private async logUserActivity(

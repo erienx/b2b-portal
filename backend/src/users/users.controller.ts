@@ -10,6 +10,8 @@ import {
     UseGuards,
     ParseUUIDPipe,
     ParseIntPipe,
+    HttpCode
+    , HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -23,6 +25,7 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from 'src/common/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 
+
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class UsersController {
@@ -35,12 +38,26 @@ export class UsersController {
     }
 
     @Get()
-    @Roles(UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @Roles(UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.DISTRIBUTOR)
     findAll(
         @Query('page', new ParseIntPipe({ optional: true })) page?: number,
         @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     ) {
         return this.usersService.findAll(page, limit);
+    }
+
+    @Get('locked')
+    getLockedUsers() {
+        return this.usersService.getLockedUsers();
+    }
+
+    @Get('activity/all')
+    @Roles(UserRole.SUPER_ADMIN)
+    getAllActivity(
+        @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    ) {
+        return this.usersService.getAllActivity(page, limit);
     }
 
     @Get(':id')
@@ -61,18 +78,21 @@ export class UsersController {
 
     @Delete(':id')
     @Roles(UserRole.SUPER_ADMIN)
+    @HttpCode(HttpStatus.NO_CONTENT)
     delete(@Param('id', ParseUUIDPipe) id: string, @GetUser() deleter: User) {
         return this.usersService.delete(id, deleter.id);
     }
 
     @Post(':id/unlock')
-    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @Roles(UserRole.DISTRIBUTOR, UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @HttpCode(HttpStatus.OK)
     unlock(@Param('id', ParseUUIDPipe) id: string, @GetUser() unlocker: User) {
         return this.usersService.unlockAccount(id, unlocker.id);
     }
 
     @Post(':id/reset-password')
     @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @HttpCode(HttpStatus.OK)
     resetPassword(
         @Param('id', ParseUUIDPipe) id: string,
         @Body() resetPasswordDto: ResetPasswordDto,
