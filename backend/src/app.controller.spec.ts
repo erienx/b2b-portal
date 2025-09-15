@@ -15,8 +15,8 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return "B2B Portal API v1.0 - Welcome!"', () => {
+      expect(appController.getHello()).toBe('B2B Portal API v1.0 - Welcome!');
     });
   });
 });

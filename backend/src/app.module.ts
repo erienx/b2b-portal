@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { CacheModule } from '@nestjs/cache-manager';
+
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { DistributorsModule } from './distributors/distributors.module';
@@ -17,30 +15,53 @@ import { AdminModule } from './admin/admin.module';
 import { ExportsModule } from './exports/exports.module';
 import { CurrencyModule } from './currency/currency.module';
 
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { CacheModule } from '@nestjs/cache-manager';
+
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    CacheModule.register({ ttl: 60 * 60 }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
+    CacheModule.register({
+      ttl: 60 * 60, // 1h
+      isGlobal: true,
+    }),
+
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (cfg: ConfigService) => ({
+      useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: cfg.get('DATABASE_HOST'),
-        port: +cfg.get('DATABASE_PORT'),
-        username: cfg.get('DATABASE_USER'),
-        password: cfg.get('DATABASE_PASSWORD'),
-        database: cfg.get('DATABASE_NAME'),
+        host: config.get<string>('DATABASE_HOST'),
+        port: config.get<number>('DATABASE_PORT'),
+        username: config.get<string>('DATABASE_USER'),
+        password: config.get<string>('DATABASE_PASSWORD'),
+        database: config.get<string>('DATABASE_NAME'),
+
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // set to false in production
-        logging: true,
+
+        synchronize: config.get<string>('NODE_ENV') === 'development',
+        logging: config.get<string>('NODE_ENV') === 'development',
+        ssl: config.get<string>('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
       }),
     }),
-    ThrottlerModule.forRoot([{ ttl: 60, limit: 100 }]),
+
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'media'),
       serveRoot: '/media',
     }),
+
     AuthModule,
     UsersModule,
     DistributorsModule,
@@ -54,4 +75,4 @@ import { CurrencyModule } from './currency/currency.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
