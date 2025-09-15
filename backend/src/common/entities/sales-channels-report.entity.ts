@@ -1,6 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, Unique, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, Unique, Index, OneToMany } from 'typeorm';
 import { Distributor } from './distributor.entity';
 import { User } from './user.entity';
+import { SkuReport } from './sku-report.entity';
+import { InventoryReport } from './inventory-report.entity';
+import { ClientReport } from './client-report.entity';
 
 @Entity('sales_channels_reports')
 @Unique(['distributor', 'year', 'quarter'])
@@ -59,4 +62,13 @@ export class SalesChannelsReport {
 
     @UpdateDateColumn()
     updated_at: Date;
+
+    @OneToMany(() => SkuReport, report => report.salesReport, { cascade: true })
+    skuReports: SkuReport[];
+
+    @OneToMany(() => InventoryReport, report => report.salesReport, { cascade: true })
+    inventoryReports: InventoryReport[];
+
+    @OneToMany(() => ClientReport, report => report.salesReport, { cascade: true })
+    clientReports: ClientReport[];
 }

@@ -92,7 +92,7 @@ export default function UserManagementPage() {
                                     {currentUser && canUnlock(currentUser, user) ? (
                                         <button
                                             onClick={() => handleUnlock(user.id)}
-                                            className="flex items-center gap-2 bg-accent-bg hover:bg-accent-hover text-white px-3 py-1 rounded-md transition"
+                                            className="flex items-center gap-2 bg-accent-bg hover:bg-accent-hover text-white px-3 py-1 rounded-md transition cursor-pointer"
                                         >
                                             <Unlock className="w-4 h-4" /> Unlock
                                         </button>

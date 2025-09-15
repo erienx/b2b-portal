@@ -13,6 +13,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
         const ctx = host.switchToHttp();
         const response = ctx.getResponse<Response>();
+        console.log('Caught exception:', exception);
 
         let status = HttpStatus.INTERNAL_SERVER_ERROR;
         let message: string | string[] = 'Something went wrong';
