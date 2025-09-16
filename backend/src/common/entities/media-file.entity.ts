@@ -26,15 +26,15 @@ export class MediaFile {
     @Index()
     category: MediaCategory;
 
-    @Column({ length: 50, nullable: true })
+    @Column({ type: 'varchar', length: 50, nullable: true })
     @Index()
-    sku: string;
+    sku: string | null;
 
     @Column('text', { array: true, nullable: true })
     tags: string[];
 
     @Column({ type: 'text', nullable: true })
-    description: string;
+    description: string | null;
 
     @Column({ default: true })
     is_active: boolean;
