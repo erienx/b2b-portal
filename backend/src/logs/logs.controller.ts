@@ -20,10 +20,10 @@ export class LogsController {
 
     @Get('export')
     @Roles(UserRole.SUPER_ADMIN)
-    async exportCsv(@Query() q: LogsQueryDto, @Res() res: Response) {
+    async exportCsv(@Query() q: LogsQueryDto, @Res({ passthrough: true }) res: Response) {
         const csv = await this.logsService.exportLogsCsv(q);
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="activity_logs_${Date.now()}.csv"`);
-        res.send(csv);
+        return csv;
     }
 }

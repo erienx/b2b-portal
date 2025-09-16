@@ -3,6 +3,7 @@ import { useApi } from "../hooks/useApi";
 import { UserRole } from "../types/auth";
 import { format } from "date-fns";
 import { DownloadCloud } from "lucide-react";
+import api from "../api/axios";
 
 type LogRow = {
     id: string;
@@ -51,14 +52,33 @@ export default function LogsPage() {
         await load();
     };
 
-    const handleExport = () => {
-        const params = new URLSearchParams();
-        if (search) params.set("search", search);
-        if (actionFilter) params.set("action", actionFilter);
-        if (dateFrom) params.set("dateFrom", dateFrom);
-        if (dateTo) params.set("dateTo", dateTo);
-        window.open(`/logs/export?${params.toString()}`, "_blank");
+    const handleExport = async () => {
+        try {
+            const params = new URLSearchParams();
+            if (search) params.set("search", search);
+            if (actionFilter) params.set("action", actionFilter);
+            if (dateFrom) params.set("dateFrom", dateFrom);
+            if (dateTo) params.set("dateTo", dateTo);
+
+            const response = await api.get(`/logs/export?${params.toString()}`, {
+                responseType: 'blob',
+            });
+
+            const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `activity_logs_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Export failed", error);
+        }
     };
+
 
     const logs = data?.logs ?? [];
 
