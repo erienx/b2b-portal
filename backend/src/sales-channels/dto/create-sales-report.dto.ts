@@ -1,49 +1,6 @@
 import { IsNumber, IsOptional, IsUUID, Min, IsArray, ValidateNested, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class SkuReportDto {
-    @IsString()
-    sku: string;
-
-    @IsNumber()
-    quantity: number;
-
-    @IsNumber()
-    value: number;
-
-    @IsString()
-    @IsOptional()
-    channel?: string; 
-}
-
-export class InventoryReportDto {
-    @IsString()
-    sku: string;
-
-    @IsNumber()
-    stock_quantity: number;
-
-    @IsNumber()
-    @IsOptional()
-    reserved_quantity?: number;
-}
-
-export class ClientReportDto {
-    @IsString()
-    client_name: string;
-
-    @IsString()
-    channel: string; 
-
-    @IsString()
-    @IsOptional()
-    location?: string;
-
-    @IsString()
-    @IsOptional()
-    contact_info?: string;
-}
-
 export class CreateSalesReportDto {
     @IsNumber()
     year: number;
@@ -78,20 +35,33 @@ export class CreateSalesReportDto {
     new_clients?: number;
 
     @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => SkuReportDto)
-    monthly_sku_reports?: SkuReportDto[];
+    stock_level?: number;
+}
 
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => InventoryReportDto)
-    inventory_reports?: InventoryReportDto[];
+export class CreateSalesClientDto {
+    @IsUUID()
+    reportId: string;
 
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => ClientReportDto)
-    client_reports?: ClientReportDto[];
+    @IsString()
+    channel: string;
+
+    @IsString()
+    client_name: string;
+}
+
+export class CreateSkuReportDto {
+    @IsUUID()
+    reportId: string;
+
+    @IsString()
+    sku: string;
+
+    @IsNumber()
+    month: number;
+
+    @IsNumber()
+    sales_value: number;
+
+    @IsNumber()
+    sales_quantity: number;
 }

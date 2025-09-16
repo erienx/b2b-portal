@@ -5,16 +5,26 @@ import { SalesChannelsReport } from '../common/entities/sales-channels-report.en
 import { Distributor } from '../common/entities/distributor.entity';
 import { User } from '../common/entities/user.entity';
 import { CurrencyService } from '../currency/currency.service';
-import { CreateSalesReportDto } from './dto/create-sales-report.dto';
+import { CreateSalesClientDto, CreateSalesReportDto, CreateSkuReportDto } from './dto/create-sales-report.dto';
 import { UserRole } from '../common/enums/user-role.enum';
+import { SalesChannelsSkuReport } from 'src/common/entities/sales-channels-sku-report.entity';
+import { SalesChannelsClient } from 'src/common/entities/sales-channels-client.entity';
 
 @Injectable()
 export class SalesChannelsService {
     constructor(
         @InjectRepository(SalesChannelsReport)
         private readonly reportRepo: Repository<SalesChannelsReport>,
+
         @InjectRepository(Distributor)
         private readonly distributorRepo: Repository<Distributor>,
+
+        @InjectRepository(SalesChannelsClient)
+        private readonly clientRepo: Repository<SalesChannelsClient>,
+
+        @InjectRepository(SalesChannelsSkuReport)
+        private readonly skuRepo: Repository<SalesChannelsSkuReport>,
+
         private readonly currencyService: CurrencyService,
     ) { }
 
@@ -138,6 +148,7 @@ export class SalesChannelsService {
     async findForYearQuarter(distributorId: string, year: number, quarter: number) {
         return this.reportRepo.findOne({
             where: { distributor: { id: distributorId }, year, quarter },
+            relations: ["clients", "skuReports"],
         });
     }
 
@@ -154,6 +165,24 @@ export class SalesChannelsService {
 
         return this.reportRepo.find({ relations: ['distributor', 'createdBy'] });
     }
+
+    async addClient(dto: CreateSalesClientDto, user: User) {
+        const report = await this.reportRepo.findOne({ where: { id: dto.reportId }, relations: ['distributor'] });
+        if (!report) throw new NotFoundException('Report not found');
+
+        const client = this.clientRepo.create({ ...dto, report });
+        return this.clientRepo.save(client);
+    }
+
+    async addSkuReport(dto: CreateSkuReportDto, user: User) {
+        const report = await this.reportRepo.findOne({ where: { id: dto.reportId }, relations: ['distributor'] });
+        if (!report) throw new NotFoundException('Report not found');
+
+        const skuReport = this.skuRepo.create({ ...dto, report });
+        return this.skuRepo.save(skuReport);
+    }
+
+
     async getAssignedDistributor(user: User): Promise<Distributor | null> {
         const assignment = await this.distributorRepo
             .createQueryBuilder('d')

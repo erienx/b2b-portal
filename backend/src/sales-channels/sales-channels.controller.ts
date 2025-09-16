@@ -3,7 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { SalesChannelsService } from './sales-channels.service';
-import { CreateSalesReportDto } from './dto/create-sales-report.dto';
+import { CreateSalesClientDto, CreateSalesReportDto, CreateSkuReportDto } from './dto/create-sales-report.dto';
 import { UserRole } from '../common/enums/user-role.enum';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../common/entities/user.entity';
@@ -39,12 +39,10 @@ export class SalesChannelsController {
         let targetDistributorId: string | undefined;
 
         if ([UserRole.DISTRIBUTOR, UserRole.EMPLOYEE].includes(user.role)) {
-            // Pobierz przypisanie z bazy
             const assignment = await this.salesService.getAssignedDistributor(user);
             if (!assignment) throw new NotFoundException('No distributor assigned to current user');
             targetDistributorId = assignment.id;
         } else {
-            // Dla adminów/managerów bierze z query
             targetDistributorId = distributorId;
         }
 
@@ -56,5 +54,17 @@ export class SalesChannelsController {
     @Roles(UserRole.DISTRIBUTOR, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.EXPORT_MANAGER)
     findAll(@GetUser() user: User) {
         return this.salesService.findAllForUser(user);
+    }
+
+    @Post('clients')
+    @Roles(UserRole.DISTRIBUTOR, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.EXPORT_MANAGER)
+    addClient(@Body() dto: CreateSalesClientDto, @GetUser() user: User) {
+        return this.salesService.addClient(dto, user);
+    }
+
+    @Post('sku')
+    @Roles(UserRole.DISTRIBUTOR, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.EXPORT_MANAGER)
+    addSku(@Body() dto: CreateSkuReportDto, @GetUser() user: User) {
+        return this.salesService.addSkuReport(dto, user);
     }
 }

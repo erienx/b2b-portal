@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useApi } from "../hooks/useApi";
 import { UploadCloud, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import api from "../api/axios";
 
-type SkuRow = { sku: string; month: number; year: number; quantity: number; value: number };
+type SkuRow = { id?: string; sku: string; month: number; sales_quantity?: number; sales_value?: number; quantity?: number; value?: number };
+type ClientRow = { id?: string; channel: string; client_name: string };
 type Distributor = { id: string; company_name: string };
 
 export default function SalesChannelsPage() {
@@ -20,15 +20,21 @@ export default function SalesChannelsPage() {
     const [ecomB2bSales, setEcomB2bSales] = useState<number>(0);
     const [thirdPartySales, setThirdPartySales] = useState<number>(0);
     const [otherSales, setOtherSales] = useState<number>(0);
-    const [newClients, setNewClients] = useState<number>(0);
+    const [newClientsCount, setNewClientsCount] = useState<number>(0);
 
     const [skuLines, setSkuLines] = useState<SkuRow[]>([]);
+    const [clients, setClients] = useState<ClientRow[]>([]);
     const [distributors, setDistributors] = useState<Distributor[]>([]);
     const [selectedDistributor, setSelectedDistributor] = useState<string>("");
 
     const { fetch: postReport } = useApi<any>(null);
     const { fetch: importFile } = useApi<any>(null);
-    const { fetch: fetchDistributors } = useApi<{ distributors: Distributor[] }>({ url: '/distributors', method: 'GET' });
+    const { fetch: fetchDistributors } = useApi<{ distributors: Distributor[] }>({ url: "/distributors", method: "GET" });
+    const { fetch: fetchReport } = useApi<any>(null);
+    const { fetch: addClientApi } = useApi<any>(null);
+    const { fetch: addSkuApi } = useApi<any>(null);
+
+    const [reportId, setReportId] = useState<string | null>(null);
 
     const total = useMemo(() => {
         return (
@@ -42,60 +48,73 @@ export default function SalesChannelsPage() {
     }, [professionalSales, pharmacySales, ecomB2cSales, ecomB2bSales, thirdPartySales, otherSales]);
 
     useEffect(() => {
-        if (currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'EXPORT_MANAGER')) {
-            fetchDistributors().then(res => setDistributors(res!.distributors || []));
+        if (currentUser && ["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role)) {
+            fetchDistributors().then((res) => setDistributors(res?.distributors || []));
         }
     }, [currentUser]);
 
-    useEffect(() => {
+    const loadReport = () => {
         if (!currentUser) return;
 
-        const fetchReport = async () => {
-            try {
-                let url = `/sales-channels/fetch?year=${year}&quarter=${quarter}`;
-                if (["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role) && selectedDistributor) {
-                    url += `&distributorId=${selectedDistributor}`;
-                }
+        let url = `/sales-channels/fetch?year=${year}&quarter=${quarter}`;
+        if (["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role) && selectedDistributor) {
+            url += `&distributorId=${selectedDistributor}`;
+        }
 
-                const res = await api.get(url);
-                const data = res.data;
-
+        fetchReport({ url, method: "GET" })
+            .then((data) => {
+                if (!data) return;
+                setReportId(data.id || null);
                 setProfessionalSales(data.professional_sales || 0);
                 setPharmacySales(data.pharmacy_sales || 0);
                 setEcomB2cSales(data.ecommerce_b2c_sales || 0);
                 setEcomB2bSales(data.ecommerce_b2b_sales || 0);
                 setThirdPartySales(data.third_party_sales || 0);
                 setOtherSales(data.other_sales || 0);
-                setNewClients(data.new_clients || 0);
-                setSkuLines(data.skuLines || []);
-            } catch (err: any) {
-                console.error("Failed to fetch report:", err);
+                setNewClientsCount(data.new_clients || 0);
+                setSkuLines(data.skuReports || []);
+                setClients(data.clients || []);
+            })
+            .catch(() => {
+                setReportId(null);
                 setProfessionalSales(0);
                 setPharmacySales(0);
                 setEcomB2cSales(0);
                 setEcomB2bSales(0);
                 setThirdPartySales(0);
                 setOtherSales(0);
-                setNewClients(0);
+                setNewClientsCount(0);
                 setSkuLines([]);
-            }
-        };
+                setClients([]);
+            });
+    };
 
-        fetchReport();
+    useEffect(() => {
+        loadReport();
     }, [year, quarter, selectedDistributor, currentUser]);
 
-
-
     const handleAddSku = () => {
-        setSkuLines(prev => [...prev, { sku: '', month: 1, year, quantity: 0, value: 0 }]);
+        setSkuLines((prev) => [...prev, { sku: "", month: 1, year, quantity: 0, value: 0 }]);
     };
 
     const handleRemoveSku = (index: number) => {
-        setSkuLines(prev => prev.filter((_, i) => i !== index));
+        setSkuLines((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleSkuChange = (index: number, partial: Partial<SkuRow>) => {
-        setSkuLines(prev => prev.map((r, i) => i === index ? { ...r, ...partial } : r));
+        setSkuLines((prev) => prev.map((r, i) => (i === index ? { ...r, ...partial } : r)));
+    };
+
+    const handleAddClient = () => {
+        setClients((prev) => [...prev, { channel: "", client_name: "" }]);
+    };
+
+    const handleRemoveClient = (index: number) => {
+        setClients((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleClientChange = (index: number, partial: Partial<ClientRow>) => {
+        setClients((prev) => prev.map((c, i) => (i === index ? { ...c, ...partial } : c)));
     };
 
     const handleSave = async () => {
@@ -108,14 +127,45 @@ export default function SalesChannelsPage() {
             ecommerce_b2b_sales: ecomB2bSales,
             third_party_sales: thirdPartySales,
             other_sales: otherSales,
-            new_clients: newClients,
-            distributorId: currentUser?.role === 'DISTRIBUTOR' || currentUser?.role === 'EMPLOYEE' ? undefined : selectedDistributor,
+            new_clients: newClientsCount,
+            distributorId:
+                currentUser?.role === "DISTRIBUTOR" || currentUser?.role === "EMPLOYEE" ? undefined : selectedDistributor,
         };
         try {
-            await postReport({ url: '/sales-channels', method: 'POST', data: payload });
-            alert('Saved');
+            const report = await postReport({ url: "/sales-channels", method: "POST", data: payload });
+            if (report?.id) setReportId(report.id);
+
+            for (const client of clients) {
+                if (!client.id && report?.id) {
+                    await addClientApi({
+                        url: "/sales-channels/clients",
+                        method: "POST",
+                        data: { ...client, reportId: report.id },
+                    });
+                }
+            }
+
+            for (const sku of skuLines) {
+                if (!sku.id && report?.id) {
+                    await addSkuApi({
+                        url: "/sales-channels/sku",
+                        method: "POST",
+                        data: {
+                            reportId: report.id,
+                            sku: sku.sku,
+                            month: sku.month,
+                            sales_quantity: sku.quantity ?? sku.sales_quantity,
+                            sales_value: sku.value ?? sku.sales_value,
+                        },
+                    });
+                }
+            }
+
+            loadReport();
+
+            alert("Saved");
         } catch (err: any) {
-            alert('Error: ' + (err.message || err));
+            alert("Error: " + (err.message || err));
         }
     };
 
@@ -124,14 +174,20 @@ export default function SalesChannelsPage() {
         if (!f) return;
 
         const form = new FormData();
-        form.append('file', f);
+        form.append("file", f);
         try {
-            await importFile({ url: '/sales-channels/import', method: 'POST', data: form, headers: { 'Content-Type': 'multipart/form-data' } });
-            alert('Import successful');
+            await importFile({
+                url: "/sales-channels/import",
+                method: "POST",
+                data: form,
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            alert("Import successful");
+            loadReport();
         } catch (err: any) {
-            alert('Import failed: ' + (err.message || err));
+            alert("Import failed: " + (err.message || err));
         } finally {
-            e.target.value = '';
+            e.target.value = "";
         }
     };
 
@@ -149,18 +205,29 @@ export default function SalesChannelsPage() {
                         <input type="file" accept=".csv" onChange={handleImport} className="hidden" />
                         <span className="text-white text-sm">Import CSV</span>
                     </label>
-                    <button onClick={handleSave} className="bg-accent-bg hover:bg-accent-hover text-white px-4 py-2 rounded-md">
+                    <button
+                        onClick={handleSave}
+                        className="bg-accent-bg hover:bg-accent-hover text-white px-4 py-2 rounded-md"
+                    >
                         Save
                     </button>
                 </div>
             </div>
 
-            {currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'EXPORT_MANAGER') && (
+            {currentUser && ["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role) && (
                 <div className="mb-4">
                     <label className="text-grey mr-2">Select Distributor:</label>
-                    <select value={selectedDistributor} onChange={e => setSelectedDistributor(e.target.value)} className="bg-bg text-white px-2 py-1 rounded">
+                    <select
+                        value={selectedDistributor}
+                        onChange={(e) => setSelectedDistributor(e.target.value)}
+                        className="bg-bg text-white px-2 py-1 rounded"
+                    >
                         <option value="">-- Select --</option>
-                        {distributors.map(d => <option key={d.id} value={d.id}>{d.company_name}</option>)}
+                        {distributors.map((d) => (
+                            <option key={d.id} value={d.id}>
+                                {d.company_name}
+                            </option>
+                        ))}
                     </select>
                 </div>
             )}
@@ -168,22 +235,37 @@ export default function SalesChannelsPage() {
             <div className="bg-surface p-4 rounded-lg border border-surfaceLight mb-6">
                 <div className="flex gap-4 items-center mb-4">
                     <label className="text-grey">Year</label>
-                    <select value={year} onChange={e => setYear(Number(e.target.value))} className="bg-bg text-white px-2 py-1 rounded">
+                    <select
+                        value={year}
+                        onChange={(e) => setYear(Number(e.target.value))}
+                        className="bg-bg text-white px-2 py-1 rounded"
+                    >
                         {Array.from({ length: 5 }).map((_, i) => {
                             const y = new Date().getFullYear() - i;
-                            return <option key={y} value={y}>{y}</option>;
+                            return (
+                                <option key={y} value={y}>
+                                    {y}
+                                </option>
+                            );
                         })}
                     </select>
 
                     <label className="text-grey">Quarter</label>
-                    <select value={quarter} onChange={e => setQuarter(Number(e.target.value))} className="bg-bg text-white px-2 py-1 rounded">
+                    <select
+                        value={quarter}
+                        onChange={(e) => setQuarter(Number(e.target.value))}
+                        className="bg-bg text-white px-2 py-1 rounded"
+                    >
                         <option value={1}>Q1</option>
                         <option value={2}>Q2</option>
                         <option value={3}>Q3</option>
                         <option value={4}>Q4</option>
                     </select>
 
-                    <div className="ml-auto text-grey">Total (PLN): <span className="text-white font-semibold ml-2">{total.toFixed(2)}</span></div>
+                    <div className="ml-auto text-grey">
+                        Total (PLN):{" "}
+                        <span className="text-white font-semibold ml-2">{total.toFixed(2)}</span>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -197,31 +279,80 @@ export default function SalesChannelsPage() {
                         <tbody className="text-white">
                             <tr>
                                 <td className="px-3 py-2">Professional sales</td>
-                                <td className="px-3 py-2"><input type="number" value={professionalSales} onChange={e => setProfessionalSales(Number(e.target.value))} className="bg-bg rounded px-2 py-1 w-40 text-white" /></td>
+                                <td className="px-3 py-2">
+                                    <input
+                                        type="number"
+                                        value={professionalSales}
+                                        onChange={(e) => setProfessionalSales(Number(e.target.value))}
+                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                    />
+                                </td>
                             </tr>
                             <tr>
                                 <td className="px-3 py-2">Pharmacy sales</td>
-                                <td className="px-3 py-2"><input type="number" value={pharmacySales} onChange={e => setPharmacySales(Number(e.target.value))} className="bg-bg rounded px-2 py-1 w-40 text-white" /></td>
+                                <td className="px-3 py-2">
+                                    <input
+                                        type="number"
+                                        value={pharmacySales}
+                                        onChange={(e) => setPharmacySales(Number(e.target.value))}
+                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                    />
+                                </td>
                             </tr>
                             <tr>
                                 <td className="px-3 py-2">E-commerce B2C</td>
-                                <td className="px-3 py-2"><input type="number" value={ecomB2cSales} onChange={e => setEcomB2cSales(Number(e.target.value))} className="bg-bg rounded px-2 py-1 w-40 text-white" /></td>
+                                <td className="px-3 py-2">
+                                    <input
+                                        type="number"
+                                        value={ecomB2cSales}
+                                        onChange={(e) => setEcomB2cSales(Number(e.target.value))}
+                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                    />
+                                </td>
                             </tr>
                             <tr>
                                 <td className="px-3 py-2">E-commerce B2B</td>
-                                <td className="px-3 py-2"><input type="number" value={ecomB2bSales} onChange={e => setEcomB2bSales(Number(e.target.value))} className="bg-bg rounded px-2 py-1 w-40 text-white" /></td>
+                                <td className="px-3 py-2">
+                                    <input
+                                        type="number"
+                                        value={ecomB2bSales}
+                                        onChange={(e) => setEcomB2bSales(Number(e.target.value))}
+                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                    />
+                                </td>
                             </tr>
                             <tr>
                                 <td className="px-3 py-2">Third party</td>
-                                <td className="px-3 py-2"><input type="number" value={thirdPartySales} onChange={e => setThirdPartySales(Number(e.target.value))} className="bg-bg rounded px-2 py-1 w-40 text-white" /></td>
+                                <td className="px-3 py-2">
+                                    <input
+                                        type="number"
+                                        value={thirdPartySales}
+                                        onChange={(e) => setThirdPartySales(Number(e.target.value))}
+                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                    />
+                                </td>
                             </tr>
                             <tr>
                                 <td className="px-3 py-2">Other</td>
-                                <td className="px-3 py-2"><input type="number" value={otherSales} onChange={e => setOtherSales(Number(e.target.value))} className="bg-bg rounded px-2 py-1 w-40 text-white" /></td>
+                                <td className="px-3 py-2">
+                                    <input
+                                        type="number"
+                                        value={otherSales}
+                                        onChange={(e) => setOtherSales(Number(e.target.value))}
+                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                    />
+                                </td>
                             </tr>
                             <tr>
                                 <td className="px-3 py-2">New clients</td>
-                                <td className="px-3 py-2"><input type="number" value={newClients} onChange={e => setNewClients(Number(e.target.value))} className="bg-bg rounded px-2 py-1 w-40 text-white" /></td>
+                                <td className="px-3 py-2">
+                                    <input
+                                        type="number"
+                                        value={newClientsCount}
+                                        onChange={(e) => setNewClientsCount(Number(e.target.value))}
+                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                    />
+                                </td>
                             </tr>
                             <tr className="border-t">
                                 <td className="px-3 py-2 font-semibold">Total</td>
@@ -232,25 +363,98 @@ export default function SalesChannelsPage() {
                 </div>
             </div>
 
-            {/* SKU lines */}
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-white">Monthly SKU reporting (optional)</h2>
-                    <div className="flex gap-2">
-                        <button onClick={handleAddSku} className="bg-surfaceLight px-3 py-1 rounded text-white flex items-center gap-2"><Plus className="w-4 h-4" /> Add SKU</button>
-                    </div>
+                    <h2 className="text-lg font-semibold text-white">Clients (optional)</h2>
+                    <button
+                        onClick={handleAddClient}
+                        className="bg-surfaceLight px-3 py-1 rounded text-white flex items-center gap-2"
+                    >
+                        <Plus className="w-4 h-4" /> Add Client
+                    </button>
                 </div>
 
                 <div className="bg-surface p-3 rounded border border-surfaceLight">
-                    {skuLines.length === 0 && <div className="text-grey">No SKU lines added</div>}
+                    {clients.length === 0 && <div className="text-grey">No clients added</div>}
+                    {clients.map((c, idx) => (
+                        <div key={idx} className="flex gap-2 items-center mb-2">
+                            <select
+                                value={c.channel}
+                                onChange={(e) => handleClientChange(idx, { channel: e.target.value })}
+                                className="bg-bg text-white px-2 py-1 rounded w-40"
+                            >
+                                <option value="">-- Select channel --</option>
+                                <option value="Professional">Professional</option>
+                                <option value="Pharmacy">Pharmacy</option>
+                                <option value="Ecommerce B2C">Ecommerce B2C</option>
+                                <option value="Ecommerce B2B">Ecommerce B2B</option>
+                                <option value="Third party">Third party</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input
+                                placeholder="Client name"
+                                value={c.client_name}
+                                onChange={(e) => handleClientChange(idx, { client_name: e.target.value })}
+                                className="bg-bg text-white px-2 py-1 rounded w-60"
+                            />
+                            <button
+                                onClick={() => handleRemoveClient(idx)}
+                                className="bg-red-600 px-2 py-1 rounded text-white"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-semibold text-white">Monthly SKU reporting (optional)</h2>
+                    <button
+                        onClick={handleAddSku}
+                        className="bg-surfaceLight px-3 py-1 rounded text-white flex items-center gap-2"
+                    >
+                        <Plus className="w-4 h-4" /> Add SKU
+                    </button>
+                </div>
+
+                <div className="bg-surface p-3 rounded border border-surfaceLight">
+                    {skuLines.length === 0 && <div className="text-grey">No SKU rows</div>}
                     {skuLines.map((s, idx) => (
                         <div key={idx} className="flex gap-2 items-center mb-2">
-                            <input placeholder="SKU" value={s.sku} onChange={e => handleSkuChange(idx, { sku: e.target.value })} className="bg-bg text-white px-2 py-1 rounded w-40" />
-                            <input type="number" value={s.month} min={1} max={12} onChange={e => handleSkuChange(idx, { month: Number(e.target.value) })} className="bg-bg text-white px-2 py-1 rounded w-20" />
-                            <input type="number" value={s.year} onChange={e => handleSkuChange(idx, { year: Number(e.target.value) })} className="bg-bg text-white px-2 py-1 rounded w-24" />
-                            <input type="number" value={s.quantity} onChange={e => handleSkuChange(idx, { quantity: Number(e.target.value) })} className="bg-bg text-white px-2 py-1 rounded w-24" />
-                            <input type="number" value={s.value} onChange={e => handleSkuChange(idx, { value: Number(e.target.value) })} className="bg-bg text-white px-2 py-1 rounded w-32" />
-                            <button onClick={() => handleRemoveSku(idx)} className="bg-red-600 px-2 py-1 rounded text-white"><Trash2 className="w-4 h-4" /></button>
+                            <input
+                                placeholder="SKU"
+                                value={s.sku}
+                                onChange={(e) => handleSkuChange(idx, { sku: e.target.value })}
+                                className="bg-bg text-white px-2 py-1 rounded w-40"
+                            />
+                            <input
+                                type="number"
+                                value={s.month}
+                                min={1}
+                                max={12}
+                                onChange={(e) => handleSkuChange(idx, { month: Number(e.target.value) })}
+                                className="bg-bg text-white px-2 py-1 rounded w-20"
+                            />
+                            <input
+                                type="number"
+                                value={s.quantity ?? s.sales_quantity}
+                                onChange={(e) => handleSkuChange(idx, { quantity: Number(e.target.value) })}
+                                className="bg-bg text-white px-2 py-1 rounded w-24"
+                            />
+                            <input
+                                type="number"
+                                value={s.value ?? s.sales_value}
+                                onChange={(e) => handleSkuChange(idx, { value: Number(e.target.value) })}
+                                className="bg-bg text-white px-2 py-1 rounded w-32"
+                            />
+                            <button
+                                onClick={() => handleRemoveSku(idx)}
+                                className="bg-red-600 px-2 py-1 rounded text-white"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
                         </div>
                     ))}
                 </div>

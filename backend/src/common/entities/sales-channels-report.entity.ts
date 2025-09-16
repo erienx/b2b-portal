@@ -1,9 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, Unique, Index, OneToMany } from 'typeorm';
 import { Distributor } from './distributor.entity';
 import { User } from './user.entity';
-import { SkuReport } from './sku-report.entity';
-import { InventoryReport } from './inventory-report.entity';
-import { ClientReport } from './client-report.entity';
+import { SalesChannelsClient } from './sales-channels-client.entity';
+import { SalesChannelsSkuReport } from './sales-channels-sku-report.entity';
 
 @Entity('sales_channels_reports')
 @Unique(['distributor', 'year', 'quarter'])
@@ -47,7 +46,9 @@ export class SalesChannelsReport {
     @Column({ default: 0 })
     new_clients: number;
 
-    // EUR fields
+    @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
+    stock_level: number;
+
     @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
     total_sales_eur: number;
 
@@ -57,18 +58,15 @@ export class SalesChannelsReport {
     @ManyToOne(() => User, { nullable: true })
     createdBy: User;
 
+    @OneToMany(() => SalesChannelsClient, (c) => c.report, { cascade: true })
+    clients: SalesChannelsClient[];
+
+    @OneToMany(() => SalesChannelsSkuReport, (sku) => sku.report, { cascade: true })
+    skuReports: SalesChannelsSkuReport[];
+
     @CreateDateColumn()
     created_at: Date;
 
     @UpdateDateColumn()
     updated_at: Date;
-
-    @OneToMany(() => SkuReport, report => report.salesReport, { cascade: true })
-    skuReports: SkuReport[];
-
-    @OneToMany(() => InventoryReport, report => report.salesReport, { cascade: true })
-    inventoryReports: InventoryReport[];
-
-    @OneToMany(() => ClientReport, report => report.salesReport, { cascade: true })
-    clientReports: ClientReport[];
 }
