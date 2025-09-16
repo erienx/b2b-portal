@@ -94,7 +94,7 @@ export default function SalesChannelsPage() {
     }, [year, quarter, selectedDistributor, currentUser]);
 
     const handleAddSku = () => {
-        setSkuLines((prev) => [...prev, { sku: "", month: 1, year, quantity: 0, value: 0 }]);
+        setSkuLines((prev) => [...prev, { sku: "", month: 1,  quantity: 0, value: 0 }]);
     };
 
     const handleRemoveSku = (index: number) => {

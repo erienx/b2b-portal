@@ -19,6 +19,7 @@ import MainLayout from "./layouts/MainLayout";
 import "./index.css";
 import LogsPage from "./pages/LogsPage";
 import SalesChannelsPage from "./pages/SalesChannelsPage";
+import PurchaseReportPage from "./pages/PurchaseReportPage";
 
 export const router = createBrowserRouter([
   {
@@ -68,6 +69,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={[UserRole.DISTRIBUTOR, UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
             <SalesChannelsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "purchase-reports",
+        element: (
+          <ProtectedRoute allowedRoles={[ UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
+            <PurchaseReportPage />
           </ProtectedRoute>
         ),
       },
