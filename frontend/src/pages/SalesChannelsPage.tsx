@@ -34,6 +34,7 @@ export default function SalesChannelsPage() {
     const { fetch: addClientApi } = useApi<any>(null);
     const { fetch: addSkuApi } = useApi<any>(null);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [reportId, setReportId] = useState<string | null>(null);
 
     const total = useMemo(() => {

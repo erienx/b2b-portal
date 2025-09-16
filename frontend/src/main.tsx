@@ -20,6 +20,7 @@ import "./index.css";
 import LogsPage from "./pages/LogsPage";
 import SalesChannelsPage from "./pages/SalesChannelsPage";
 import PurchaseReportPage from "./pages/PurchaseReportPage";
+import MediaPage from "./pages/MediaPage";
 
 export const router = createBrowserRouter([
   {
@@ -73,9 +74,17 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "media",
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.EMPLOYEE, UserRole.DISTRIBUTOR, UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
+            <MediaPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "purchase-reports",
         element: (
-          <ProtectedRoute allowedRoles={[ UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
+          <ProtectedRoute allowedRoles={[UserRole.EXPORT_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
             <PurchaseReportPage />
           </ProtectedRoute>
         ),
