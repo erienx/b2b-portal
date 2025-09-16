@@ -231,234 +231,244 @@ export default function SalesChannelsPage() {
                     </select>
                 </div>
             )}
+            {currentUser &&
+                ["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role) &&
+                !selectedDistributor && (
+                    <div className="text-grey text-lg mt-10">Pick a distributor to view or edit reports</div>
+                )}
 
-            <div className="bg-surface p-4 rounded-lg border border-surfaceLight mb-6">
-                <div className="flex gap-4 items-center mb-4">
-                    <label className="text-grey">Year</label>
-                    <select
-                        value={year}
-                        onChange={(e) => setYear(Number(e.target.value))}
-                        className="bg-bg text-white px-2 py-1 rounded"
-                    >
-                        {Array.from({ length: 5 }).map((_, i) => {
-                            const y = new Date().getFullYear() - i;
-                            return (
-                                <option key={y} value={y}>
-                                    {y}
-                                </option>
-                            );
-                        })}
-                    </select>
+            {(!["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser?.role || "") ||
+                selectedDistributor) && (
+                    <>
+                        <div className="bg-surface p-4 rounded-lg border border-surfaceLight mb-6">
+                            <div className="flex gap-4 items-center mb-4">
+                                <label className="text-grey">Year</label>
+                                <select
+                                    value={year}
+                                    onChange={(e) => setYear(Number(e.target.value))}
+                                    className="bg-bg text-white px-2 py-1 rounded"
+                                >
+                                    {Array.from({ length: 5 }).map((_, i) => {
+                                        const y = new Date().getFullYear() - i;
+                                        return (
+                                            <option key={y} value={y}>
+                                                {y}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
 
-                    <label className="text-grey">Quarter</label>
-                    <select
-                        value={quarter}
-                        onChange={(e) => setQuarter(Number(e.target.value))}
-                        className="bg-bg text-white px-2 py-1 rounded"
-                    >
-                        <option value={1}>Q1</option>
-                        <option value={2}>Q2</option>
-                        <option value={3}>Q3</option>
-                        <option value={4}>Q4</option>
-                    </select>
+                                <label className="text-grey">Quarter</label>
+                                <select
+                                    value={quarter}
+                                    onChange={(e) => setQuarter(Number(e.target.value))}
+                                    className="bg-bg text-white px-2 py-1 rounded"
+                                >
+                                    <option value={1}>Q1</option>
+                                    <option value={2}>Q2</option>
+                                    <option value={3}>Q3</option>
+                                    <option value={4}>Q4</option>
+                                </select>
 
-                    <div className="ml-auto text-grey">
-                        Total (PLN):{" "}
-                        <span className="text-white font-semibold ml-2">{total.toFixed(2)}</span>
-                    </div>
-                </div>
+                                <div className="ml-auto text-grey">
+                                    Total (PLN):{" "}
+                                    <span className="text-white font-semibold ml-2">{total.toFixed(2)}</span>
+                                </div>
+                            </div>
 
-                <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                        <thead className="text-left text-grey">
-                            <tr>
-                                <th className="px-3 py-2">Channel</th>
-                                <th className="px-3 py-2">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-white">
-                            <tr>
-                                <td className="px-3 py-2">Professional sales</td>
-                                <td className="px-3 py-2">
-                                    <input
-                                        type="number"
-                                        value={professionalSales}
-                                        onChange={(e) => setProfessionalSales(Number(e.target.value))}
-                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="px-3 py-2">Pharmacy sales</td>
-                                <td className="px-3 py-2">
-                                    <input
-                                        type="number"
-                                        value={pharmacySales}
-                                        onChange={(e) => setPharmacySales(Number(e.target.value))}
-                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="px-3 py-2">E-commerce B2C</td>
-                                <td className="px-3 py-2">
-                                    <input
-                                        type="number"
-                                        value={ecomB2cSales}
-                                        onChange={(e) => setEcomB2cSales(Number(e.target.value))}
-                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="px-3 py-2">E-commerce B2B</td>
-                                <td className="px-3 py-2">
-                                    <input
-                                        type="number"
-                                        value={ecomB2bSales}
-                                        onChange={(e) => setEcomB2bSales(Number(e.target.value))}
-                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="px-3 py-2">Third party</td>
-                                <td className="px-3 py-2">
-                                    <input
-                                        type="number"
-                                        value={thirdPartySales}
-                                        onChange={(e) => setThirdPartySales(Number(e.target.value))}
-                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="px-3 py-2">Other</td>
-                                <td className="px-3 py-2">
-                                    <input
-                                        type="number"
-                                        value={otherSales}
-                                        onChange={(e) => setOtherSales(Number(e.target.value))}
-                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="px-3 py-2">New clients</td>
-                                <td className="px-3 py-2">
-                                    <input
-                                        type="number"
-                                        value={newClientsCount}
-                                        onChange={(e) => setNewClientsCount(Number(e.target.value))}
-                                        className="bg-bg rounded px-2 py-1 w-40 text-white"
-                                    />
-                                </td>
-                            </tr>
-                            <tr className="border-t">
-                                <td className="px-3 py-2 font-semibold">Total</td>
-                                <td className="px-3 py-2 font-semibold text-white">{total.toFixed(2)} PLN</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-white">Clients (optional)</h2>
-                    <button
-                        onClick={handleAddClient}
-                        className="bg-surfaceLight px-3 py-1 rounded text-white flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" /> Add Client
-                    </button>
-                </div>
-
-                <div className="bg-surface p-3 rounded border border-surfaceLight">
-                    {clients.length === 0 && <div className="text-grey">No clients added</div>}
-                    {clients.map((c, idx) => (
-                        <div key={idx} className="flex gap-2 items-center mb-2">
-                            <select
-                                value={c.channel}
-                                onChange={(e) => handleClientChange(idx, { channel: e.target.value })}
-                                className="bg-bg text-white px-2 py-1 rounded w-40"
-                            >
-                                <option value="">-- Select channel --</option>
-                                <option value="Professional">Professional</option>
-                                <option value="Pharmacy">Pharmacy</option>
-                                <option value="Ecommerce B2C">Ecommerce B2C</option>
-                                <option value="Ecommerce B2B">Ecommerce B2B</option>
-                                <option value="Third party">Third party</option>
-                                <option value="Other">Other</option>
-                            </select>
-                            <input
-                                placeholder="Client name"
-                                value={c.client_name}
-                                onChange={(e) => handleClientChange(idx, { client_name: e.target.value })}
-                                className="bg-bg text-white px-2 py-1 rounded w-60"
-                            />
-                            <button
-                                onClick={() => handleRemoveClient(idx)}
-                                className="bg-red-600 px-2 py-1 rounded text-white"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full">
+                                    <thead className="text-left text-grey">
+                                        <tr>
+                                            <th className="px-3 py-2">Channel</th>
+                                            <th className="px-3 py-2">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-white">
+                                        <tr>
+                                            <td className="px-3 py-2">Professional sales</td>
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="number"
+                                                    value={professionalSales}
+                                                    onChange={(e) => setProfessionalSales(Number(e.target.value))}
+                                                    className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-3 py-2">Pharmacy sales</td>
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="number"
+                                                    value={pharmacySales}
+                                                    onChange={(e) => setPharmacySales(Number(e.target.value))}
+                                                    className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-3 py-2">E-commerce B2C</td>
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="number"
+                                                    value={ecomB2cSales}
+                                                    onChange={(e) => setEcomB2cSales(Number(e.target.value))}
+                                                    className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-3 py-2">E-commerce B2B</td>
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="number"
+                                                    value={ecomB2bSales}
+                                                    onChange={(e) => setEcomB2bSales(Number(e.target.value))}
+                                                    className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-3 py-2">Third party</td>
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="number"
+                                                    value={thirdPartySales}
+                                                    onChange={(e) => setThirdPartySales(Number(e.target.value))}
+                                                    className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-3 py-2">Other</td>
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="number"
+                                                    value={otherSales}
+                                                    onChange={(e) => setOtherSales(Number(e.target.value))}
+                                                    className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-3 py-2">New clients</td>
+                                            <td className="px-3 py-2">
+                                                <input
+                                                    type="number"
+                                                    value={newClientsCount}
+                                                    onChange={(e) => setNewClientsCount(Number(e.target.value))}
+                                                    className="bg-bg rounded px-2 py-1 w-40 text-white"
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr className="border-t">
+                                            <td className="px-3 py-2 font-semibold">Total</td>
+                                            <td className="px-3 py-2 font-semibold text-white">{total.toFixed(2)} PLN</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    ))}
-                </div>
-            </div>
 
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-white">Monthly SKU reporting (optional)</h2>
-                    <button
-                        onClick={handleAddSku}
-                        className="bg-surfaceLight px-3 py-1 rounded text-white flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" /> Add SKU
-                    </button>
-                </div>
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between mb-3">
+                                <h2 className="text-lg font-semibold text-white">Clients (optional)</h2>
+                                <button
+                                    onClick={handleAddClient}
+                                    className="bg-surfaceLight px-3 py-1 rounded text-white flex items-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" /> Add Client
+                                </button>
+                            </div>
 
-                <div className="bg-surface p-3 rounded border border-surfaceLight">
-                    {skuLines.length === 0 && <div className="text-grey">No SKU rows</div>}
-                    {skuLines.map((s, idx) => (
-                        <div key={idx} className="flex gap-2 items-center mb-2">
-                            <input
-                                placeholder="SKU"
-                                value={s.sku}
-                                onChange={(e) => handleSkuChange(idx, { sku: e.target.value })}
-                                className="bg-bg text-white px-2 py-1 rounded w-40"
-                            />
-                            <input
-                                type="number"
-                                value={s.month}
-                                min={1}
-                                max={12}
-                                onChange={(e) => handleSkuChange(idx, { month: Number(e.target.value) })}
-                                className="bg-bg text-white px-2 py-1 rounded w-20"
-                            />
-                            <input
-                                type="number"
-                                value={s.quantity ?? s.sales_quantity}
-                                onChange={(e) => handleSkuChange(idx, { quantity: Number(e.target.value) })}
-                                className="bg-bg text-white px-2 py-1 rounded w-24"
-                            />
-                            <input
-                                type="number"
-                                value={s.value ?? s.sales_value}
-                                onChange={(e) => handleSkuChange(idx, { value: Number(e.target.value) })}
-                                className="bg-bg text-white px-2 py-1 rounded w-32"
-                            />
-                            <button
-                                onClick={() => handleRemoveSku(idx)}
-                                className="bg-red-600 px-2 py-1 rounded text-white"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="bg-surface p-3 rounded border border-surfaceLight">
+                                {clients.length === 0 && <div className="text-grey">No clients added</div>}
+                                {clients.map((c, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center mb-2">
+                                        <select
+                                            value={c.channel}
+                                            onChange={(e) => handleClientChange(idx, { channel: e.target.value })}
+                                            className="bg-bg text-white px-2 py-1 rounded w-40"
+                                        >
+                                            <option value="">-- Select channel --</option>
+                                            <option value="Professional">Professional</option>
+                                            <option value="Pharmacy">Pharmacy</option>
+                                            <option value="Ecommerce B2C">Ecommerce B2C</option>
+                                            <option value="Ecommerce B2B">Ecommerce B2B</option>
+                                            <option value="Third party">Third party</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <input
+                                            placeholder="Client name"
+                                            value={c.client_name}
+                                            onChange={(e) => handleClientChange(idx, { client_name: e.target.value })}
+                                            className="bg-bg text-white px-2 py-1 rounded w-60"
+                                        />
+                                        <button
+                                            onClick={() => handleRemoveClient(idx)}
+                                            className="bg-red-600 px-2 py-1 rounded text-white"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    ))}
-                </div>
-            </div>
+
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between mb-3">
+                                <h2 className="text-lg font-semibold text-white">Monthly SKU reporting (optional)</h2>
+                                <button
+                                    onClick={handleAddSku}
+                                    className="bg-surfaceLight px-3 py-1 rounded text-white flex items-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" /> Add SKU
+                                </button>
+                            </div>
+
+                            <div className="bg-surface p-3 rounded border border-surfaceLight">
+                                {skuLines.length === 0 && <div className="text-grey">No SKU rows</div>}
+                                {skuLines.map((s, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center mb-2">
+                                        <input
+                                            placeholder="SKU"
+                                            value={s.sku}
+                                            onChange={(e) => handleSkuChange(idx, { sku: e.target.value })}
+                                            className="bg-bg text-white px-2 py-1 rounded w-40"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={s.month}
+                                            min={1}
+                                            max={12}
+                                            onChange={(e) => handleSkuChange(idx, { month: Number(e.target.value) })}
+                                            className="bg-bg text-white px-2 py-1 rounded w-20"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={s.quantity ?? s.sales_quantity}
+                                            onChange={(e) => handleSkuChange(idx, { quantity: Number(e.target.value) })}
+                                            className="bg-bg text-white px-2 py-1 rounded w-24"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={s.value ?? s.sales_value}
+                                            onChange={(e) => handleSkuChange(idx, { value: Number(e.target.value) })}
+                                            className="bg-bg text-white px-2 py-1 rounded w-32"
+                                        />
+                                        <button
+                                            onClick={() => handleRemoveSku(idx)}
+                                            className="bg-red-600 px-2 py-1 rounded text-white"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>)}
         </div>
+
     );
 }
