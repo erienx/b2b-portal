@@ -44,6 +44,13 @@ async function seed() {
                 role: UserRole.DISTRIBUTOR,
             },
             {
+                email: 'distributor2@demo.com',
+                password: 'Distributor123!',
+                firstName: 'Jack',
+                lastName: 'Distributor',
+                role: UserRole.DISTRIBUTOR,
+            },
+            {
                 email: 'exportmanager@demo.com',
                 password: 'Manager123!',
                 firstName: 'Mike',
@@ -71,39 +78,65 @@ async function seed() {
                 console.log(`Demo user already exists: ${userData.email}`);
             }
 
-            createdUsers[userData.role] = user;
+            createdUsers[userData.email] = user;
         }
 
         const distributorRepo = dataSource.getRepository(Distributor);
         const assignmentRepo = dataSource.getRepository(UserDistributorAssignment);
 
-        const existingDistributor = await distributorRepo.findOne({
-            where: {
-                company_name: 'Demo Distributor 1',
-            },
+        const existingDistributor1 = await distributorRepo.findOne({
+            where: { company_name: 'Demo Distributor 1' },
             relations: ['exportManager'],
         });
 
-        if (!existingDistributor) {
-            const distributor = distributorRepo.create({
+        if (!existingDistributor1) {
+            const distributor1 = distributorRepo.create({
                 company_name: 'Demo Distributor 1',
                 country: 'PL',
                 currency: 'PLN',
-                exportManager: createdUsers[UserRole.EXPORT_MANAGER],
+                exportManager: createdUsers['exportmanager@demo.com'],
             });
 
-            await distributorRepo.save(distributor);
-            console.log('Distributor created:', distributor.company_name);
+            await distributorRepo.save(distributor1);
+            console.log('Distributor created:', distributor1.company_name);
 
-            const assignment = assignmentRepo.create({
-                distributor,
-                user: createdUsers[UserRole.DISTRIBUTOR],
+            const assignment1 = assignmentRepo.create({
+                distributor: distributor1,
+                user: createdUsers['distributor@demo.com'],
             });
 
-            await assignmentRepo.save(assignment);
-            console.log('User assigned to distributor:', createdUsers[UserRole.DISTRIBUTOR].email);
+            await assignmentRepo.save(assignment1);
+            console.log('User assigned to distributor:', createdUsers['distributor@demo.com'].email);
         } else {
-            console.log('Distributor already exists:', existingDistributor.company_name);
+            console.log('Distributor already exists:', existingDistributor1.company_name);
+        }
+
+        // --- NEW DISTRIBUTOR 2 ---
+        const existingDistributor2 = await distributorRepo.findOne({
+            where: { company_name: 'Demo Distributor 2' },
+            relations: ['exportManager'],
+        });
+
+        if (!existingDistributor2) {
+            const distributor2 = distributorRepo.create({
+                company_name: 'Demo Distributor 2',
+                country: 'PL',
+                currency: 'PLN',
+                exportManager: createdUsers['exportmanager@demo.com'],
+            });
+
+            await distributorRepo.save(distributor2);
+            console.log('Distributor created:', distributor2.company_name);
+
+            const assignment2 = assignmentRepo.create({
+                distributor: distributor2,
+                user: createdUsers['distributor2@demo.com'],
+            });
+
+            await assignmentRepo.save(assignment2);
+            console.log('User assigned to distributor:', createdUsers['distributor2@demo.com'].email);
+        } else {
+            console.log('Distributor already exists:', existingDistributor2.company_name);
         }
 
         console.log('Database seeding completed!');
