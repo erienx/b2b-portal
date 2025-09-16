@@ -61,15 +61,15 @@ export default function LogsPage() {
             if (dateTo) params.set("dateTo", dateTo);
 
             const response = await api.get(`/logs/export?${params.toString()}`, {
-                responseType: 'blob',
+                responseType: "blob",
             });
 
-            const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([response.data], { type: "text/csv;charset=utf-8;" });
             const url = window.URL.createObjectURL(blob);
 
-            const link = document.createElement('a');
+            const link = document.createElement("a");
             link.href = url;
-            link.setAttribute('download', `activity_logs_${Date.now()}.csv`);
+            link.setAttribute("download", `activity_logs_${Date.now()}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -79,8 +79,8 @@ export default function LogsPage() {
         }
     };
 
-
     const logs = data?.logs ?? [];
+    const totalPages = data?.totalPages ?? 1;
 
     return (
         <div>
@@ -125,11 +125,24 @@ export default function LogsPage() {
                     <option value="ACCOUNT_UNLOCKED">ACCOUNT_UNLOCKED</option>
                 </select>
 
-                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="bg-bg text-white px-3 py-2 rounded-md w-full md:w-1/6" />
-                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="bg-bg text-white px-3 py-2 rounded-md w-full md:w-1/6" />
+                <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="bg-bg text-white px-3 py-2 rounded-md w-full md:w-1/6"
+                />
+                <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="bg-bg text-white px-3 py-2 rounded-md w-full md:w-1/6"
+                />
 
                 <div className="flex gap-2">
-                    <button onClick={handleSearch} className="bg-accent-bg hover:bg-accent-hover text-white px-3 py-2 rounded-md">
+                    <button
+                        onClick={handleSearch}
+                        className="bg-accent-bg hover:bg-accent-hover text-white px-3 py-2 rounded-md"
+                    >
                         Apply
                     </button>
                     <button
@@ -164,13 +177,17 @@ export default function LogsPage() {
                     <tbody className="divide-y divide-surfaceLight">
                         {loading && (
                             <tr>
-                                <td colSpan={6} className="px-4 py-6 text-center text-white">Loading...</td>
+                                <td colSpan={6} className="px-4 py-6 text-center text-white">
+                                    Loading...
+                                </td>
                             </tr>
                         )}
 
                         {!loading && logs.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="px-4 py-6 text-center text-grey">No logs found</td>
+                                <td colSpan={6} className="px-4 py-6 text-center text-grey">
+                                    No logs found
+                                </td>
                             </tr>
                         )}
 
@@ -183,7 +200,9 @@ export default function LogsPage() {
                                     {l.user ? (
                                         <div>
                                             <div className="text-white">{l.user.email}</div>
-                                            <div className="text-sm text-grey">{l.user.firstName} {l.user.lastName}</div>
+                                            <div className="text-sm text-grey">
+                                                {l.user.firstName} {l.user.lastName}
+                                            </div>
                                         </div>
                                     ) : (
                                         <span className="text-grey">system</span>
@@ -191,14 +210,18 @@ export default function LogsPage() {
                                 </td>
                                 <td className="px-4 py-3 text-white">{l.action}</td>
                                 <td className="px-4 py-3 text-grey">
-                                    {l.resourceType ? `${l.resourceType}${l.resourceId ? ` (${l.resourceId})` : ''}` : '—'}
+                                    {l.resourceType
+                                        ? `${l.resourceType}${l.resourceId ? ` (${l.resourceId})` : ""}`
+                                        : "—"}
                                 </td>
                                 <td className="px-4 py-3 text-grey">
-                                    <div>{l.ipAddress ?? '—'}</div>
-                                    <div className="text-sm truncate max-w-xs">{l.userAgent ?? ''}</div>
+                                    <div>{l.ipAddress ?? "—"}</div>
+                                    <div className="text-sm truncate max-w-xs">{l.userAgent ?? ""}</div>
                                 </td>
                                 <td className="px-4 py-3 text-white">
-                                    <pre className="text-sm max-w-xl truncate">{typeof l.details === 'string' ? l.details : JSON.stringify(l.details)}</pre>
+                                    <pre className="text-sm max-w-xl truncate">
+                                        {typeof l.details === "string" ? l.details : JSON.stringify(l.details)}
+                                    </pre>
                                 </td>
                             </tr>
                         ))}
@@ -207,19 +230,42 @@ export default function LogsPage() {
             </div>
 
             <div className="mt-4 flex items-center justify-between">
-                <div className="text-grey text-sm">
-                    Total: {data?.total ?? 0}
-                </div>
+                <div className="text-grey text-sm">Total: {data?.total ?? 0}</div>
                 <div className="flex items-center gap-2">
-                    <select value={limit} onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }} className="bg-bg text-white px-2 py-1 rounded-md">
+                    <select
+                        value={limit}
+                        onChange={(e) => {
+                            setLimit(Number(e.target.value));
+                            setPage(1);
+                        }}
+                        className="bg-bg text-white px-2 py-1 rounded-md"
+                    >
                         <option value={10}>10</option>
                         <option value={25}>25</option>
                         <option value={50}>50</option>
                     </select>
 
-                    <button onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-3 py-1 rounded-md bg-surfaceLight text-white">Prev</button>
-                    <div className="text-white">Page {page} / {data?.totalPages ?? 1}</div>
-                    <button onClick={() => setPage((p) => p + 1)} className="px-3 py-1 rounded-md bg-surfaceLight text-white">Next</button>
+                    <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        className={`px-3 py-1 rounded-md ${page <= 1 ? "bg-surface text-grey cursor-not-allowed" : "bg-surfaceLight text-white"
+                            }`}
+                    >
+                        Prev
+                    </button>
+                    <div className="text-white">
+                        Page {page} / {totalPages}
+                    </div>
+                    <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                        className={`px-3 py-1 rounded-md ${page >= totalPages
+                                ? "bg-surface text-grey cursor-not-allowed"
+                                : "bg-surfaceLight text-white"
+                            }`}
+                    >
+                        Next
+                    </button>
                 </div>
             </div>
         </div>
