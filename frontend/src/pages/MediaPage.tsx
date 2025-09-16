@@ -69,7 +69,6 @@ export default function MediaPage() {
     const [categories, setCategories] = useState<MediaCategory[]>([]);
     const [total, setTotal] = useState(0);
 
-    // API hooks
     const { fetch: fetchMedia } = useApi<MediaResponse>(null);
     const { fetch: fetchCategories } = useApi<MediaCategory[]>(null);
     const { fetch: uploadMediaFile } = useApi<MediaFile>(null);
@@ -77,7 +76,6 @@ export default function MediaPage() {
     const { fetch: downloadFile } = useApi<Blob>(null);
     const { fetch: downloadMultiple } = useApi<Blob>(null);
 
-    // Build query parameters
     const queryParams = useMemo(() => {
         const params = new URLSearchParams();
         if (searchTerm) params.append('filename', searchTerm);
@@ -90,7 +88,6 @@ export default function MediaPage() {
         return params.toString();
     }, [searchTerm, skuFilter, tagFilter, categoryFilter, sortBy, page, limit]);
 
-    // Load media files
     const loadMedia = () => {
         fetchMedia({ url: `/media?${queryParams}`, method: 'GET' })
             .then((data) => {
@@ -105,7 +102,6 @@ export default function MediaPage() {
             });
     };
 
-    // Load categories
     const loadCategories = () => {
         fetchCategories({ url: '/media/categories', method: 'GET' })
             .then((data) => {
@@ -124,7 +120,6 @@ export default function MediaPage() {
         loadCategories();
     }, [currentUser]);
 
-    // File upload
     const handleUpload = async () => {
         if (!uploadFile) {
             alert('Please select a file');
@@ -153,7 +148,6 @@ export default function MediaPage() {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            // Reset form
             setUploadFile(null);
             setUploadSku('');
             setUploadTags('');
@@ -161,7 +155,6 @@ export default function MediaPage() {
             setUploadCategoryId('');
             setShowUpload(false);
 
-            // Reload data
             loadMedia();
             alert('File uploaded successfully');
         } catch (err: any) {
@@ -169,7 +162,6 @@ export default function MediaPage() {
         }
     };
 
-    // Category creation
     const handleCreateCategory = async () => {
         if (!newCategoryName || !newCategoryPath) {
             alert('Name and path are required');
@@ -187,13 +179,11 @@ export default function MediaPage() {
                 }
             });
 
-            // Reset form
             setNewCategoryName('');
             setNewCategoryPath('');
             setNewCategoryDescription('');
             setShowCategoryForm(false);
 
-            // Reload categories
             loadCategories();
             alert('Category created successfully');
         } catch (err: any) {
@@ -201,7 +191,6 @@ export default function MediaPage() {
         }
     };
 
-    // File download
     const handleDownload = async (fileId: string, filename: string) => {
         try {
             const blob = await downloadFile({
@@ -225,7 +214,6 @@ export default function MediaPage() {
         }
     };
 
-    // Multiple file download
     const handleDownloadMultiple = async () => {
         if (selectedFiles.length === 0) {
             alert('Please select files to download');
@@ -254,7 +242,6 @@ export default function MediaPage() {
         }
     };
 
-    // File selection
     const toggleFileSelection = (fileId: string) => {
         setSelectedFiles(prev =>
             prev.includes(fileId)
@@ -271,7 +258,6 @@ export default function MediaPage() {
         setSelectedFiles([]);
     };
 
-    // File type icon
     const getFileIcon = (mimeType: string) => {
         if (mimeType.startsWith('image/')) return <Image className="w-5 h-5" />;
         if (mimeType.startsWith('video/')) return <Video className="w-5 h-5" />;
@@ -281,7 +267,6 @@ export default function MediaPage() {
         return <File className="w-5 h-5" />;
     };
 
-    // Format file size
     const formatFileSize = (bytes: number) => {
         if (bytes === 0) return '0 B';
         const k = 1024;
@@ -290,7 +275,6 @@ export default function MediaPage() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    // Format date
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-GB', {
             day: '2-digit',
@@ -299,12 +283,10 @@ export default function MediaPage() {
         });
     };
 
-    // Pagination
     const totalPages = Math.ceil(total / limit);
 
     return (
         <div>
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Media Library</h1>
@@ -340,7 +322,6 @@ export default function MediaPage() {
                 </div>
             </div>
 
-            {/* Search and Filters */}
             <div className="bg-surface p-4 rounded-lg border border-surfaceLight mb-6">
                 <div className="flex flex-wrap items-center gap-4 mb-4">
                     <div className="flex items-center gap-2">
@@ -437,7 +418,6 @@ export default function MediaPage() {
                 )}
             </div>
 
-            {/* Selection controls */}
             {mediaFiles.length > 0 && (
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
@@ -470,7 +450,6 @@ export default function MediaPage() {
                 </div>
             )}
 
-            {/* Files Grid/List */}
             {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
                     {mediaFiles.map((file) => (
@@ -647,7 +626,6 @@ export default function MediaPage() {
                 </div>
             )}
 
-            {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex items-center justify-between">
                     <div className="text-grey text-sm">
@@ -694,7 +672,6 @@ export default function MediaPage() {
                 </div>
             )}
 
-            {/* Upload Modal */}
             {showUpload && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-surface p-6 rounded-lg border border-surfaceLight w-full max-w-md">
@@ -780,7 +757,6 @@ export default function MediaPage() {
                 </div>
             )}
 
-            {/* Category Creation Modal */}
             {showCategoryForm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-surface p-6 rounded-lg border border-surfaceLight w-full max-w-md">
@@ -841,7 +817,6 @@ export default function MediaPage() {
                 </div>
             )}
 
-            {/* Empty state */}
             {mediaFiles.length === 0 && (
                 <div className="text-center py-12">
                     <File className="w-12 h-12 text-grey mx-auto mb-4" />

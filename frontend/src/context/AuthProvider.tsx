@@ -67,7 +67,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
     async function handleChangePassword(currentPassword: string, newPassword: string) {
         await authApi.changePassword({ currentPassword, newPassword });
-        // Po zmianie hasła pobierz świeży profil
         const user = await authApi.getMe();
         setCurrentUser(user);
     }

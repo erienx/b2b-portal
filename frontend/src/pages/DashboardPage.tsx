@@ -96,21 +96,6 @@ function DashboardPage() {
     ];
 
 
-    // const cardAccess = dashboardCards.map(card => {
-    //     const hasAccess = card.requiredRoles
-    //         ? card.requiredRoles.some(role => {
-    //             if (role === UserRole.ADMIN && hasAdminAccess) return true;
-    //             if (role === UserRole.EXPORT_MANAGER && hasExportManagerAccess) return true;
-    //             if (role === UserRole.SUPER_ADMIN && hasSuperAdminAccess) return true;
-    //             return false;
-    //         })
-    //         : true;
-
-    //     return {
-    //         ...card,
-    //         hasAccess
-    //     };
-    // });
     const accessibleCards = dashboardCards.filter((card) =>
         card.requiredRoles ? card.requiredRoles.includes(currentUser.role) : true
     );

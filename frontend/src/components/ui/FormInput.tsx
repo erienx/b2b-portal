@@ -21,12 +21,6 @@ const FormInput = ({ Icon, type, placeholder, register, value, error, showToggle
     const hasValue = value && value.length > 0;
     const hasError = !!error;
 
-    // const getIconColor = () => {
-    //     if (hasError) return "text-red-400";
-    //     if (hasValue) return "text-accent-bg";
-    //     if (isFocused) return "text-grey";
-    //     return "text-surfaceLight";
-    // };
 
     const getBorderColor = () => {
         if (hasError) return "border-red-400";
