@@ -10,17 +10,22 @@ export default function Header() {
         <header className="bg-surface border-b border-surfaceLight z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between py-4">
-                    <Link className="flex items-center space-x-3" to={"/dashboard"}>
-                        <Package className="h-8 w-8 text-accent-bg" />
+
+                    <Link
+                        className="flex items-center gap-3 whitespace-nowrap"
+                        to={"/dashboard"}
+                    >
+                        <Package className="h-8 w-8 text-accent-bg flex-shrink-0" />
                         <h1 className="text-xl font-bold text-white">B2B Portal</h1>
                     </Link>
+
                     {currentUser && (
-                        <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                                <p className="text-sm text-grey">Welcome back</p>
-                                <p className="text-white font-medium">
+                        <div className="flex items-center gap-6">
+                            <div className="flex flex-col whitespace-nowrap">
+                                <span className="text-sm text-grey">Welcome back</span>
+                                <span className="text-white font-medium">
                                     {currentUser.firstName} {currentUser.lastName}
-                                </p>
+                                </span>
                             </div>
                             <LogOutButton />
                         </div>
