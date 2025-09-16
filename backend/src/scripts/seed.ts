@@ -58,6 +58,13 @@ async function seed() {
                 role: UserRole.EXPORT_MANAGER,
             },
             {
+                email: 'exportmanager2@demo.com',
+                password: 'Manager123!',
+                firstName: 'Marta',
+                lastName: 'Manager',
+                role: UserRole.EXPORT_MANAGER,
+            },
+            {
                 email: 'admin@demo.com',
                 password: 'Admin123!',
                 firstName: 'Alice',
@@ -65,6 +72,7 @@ async function seed() {
                 role: UserRole.ADMIN,
             },
         ];
+
 
         const createdUsers = {};
 
@@ -111,7 +119,6 @@ async function seed() {
             console.log('Distributor already exists:', existingDistributor1.company_name);
         }
 
-        // --- NEW DISTRIBUTOR 2 ---
         const existingDistributor2 = await distributorRepo.findOne({
             where: { company_name: 'Demo Distributor 2' },
             relations: ['exportManager'],
@@ -120,9 +127,9 @@ async function seed() {
         if (!existingDistributor2) {
             const distributor2 = distributorRepo.create({
                 company_name: 'Demo Distributor 2',
-                country: 'PL',
-                currency: 'PLN',
-                exportManager: createdUsers['exportmanager@demo.com'],
+                country: 'EN',
+                currency: 'USD',
+                exportManager: createdUsers['exportmanager2@demo.com'],
             });
 
             await distributorRepo.save(distributor2);
