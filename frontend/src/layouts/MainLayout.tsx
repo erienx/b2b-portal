@@ -5,7 +5,7 @@ import Footer from "../components/layout/Footer";
 export default function MainLayout() {
   const location = useLocation();
 
-  const noLayoutRoutes = ["/login", "/change-password"];
+  const noLayoutRoutes = ["/login", "/change-password", "/"];
 
   if (noLayoutRoutes.includes(location.pathname)) {
     return (
