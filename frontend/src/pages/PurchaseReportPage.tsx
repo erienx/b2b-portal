@@ -45,7 +45,7 @@ export default function PurchaseReportPage() {
     const [dashboardData, setDashboardData] = useState<any[]>([]);
 
     const { fetch: postReport } = useApi<any>(null);
-    const { fetch: fetchDistributors } = useApi<{ distributors: Distributor[] }>({ url: "/distributors", method: "GET" });
+    const { fetch: fetchDistributors } = useApi<{ distributors: Distributor[] }>({ url: "/distributors/list/all", method: "GET" });
     const { fetch: fetchReport } = useApi<PurchaseReportData>(null);
     const { fetch: fetchDashboard } = useApi<any[]>(null);
 

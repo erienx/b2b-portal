@@ -18,6 +18,12 @@ export class DistributorsController {
     async getDistributors(@GetUser() user: User) {
         return this.distributorsService.getDistributorsForUser(user);
     }
+    @Get('list/all')
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.EXPORT_MANAGER)
+    async getAllDistributorsForSelect(@GetUser() user: User) {
+        const distributors = await this.distributorsService.getDistributorsForUser(user);
+        return { distributors };
+    }
 
     @Post()
     @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)

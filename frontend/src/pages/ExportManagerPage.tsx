@@ -4,65 +4,9 @@ import { useApi } from "../hooks/useApi";
 import { useAuth } from "../context/AuthContext";
 import { PlusCircle, Calendar, Users, TrendingUp, Building, Search } from "lucide-react";
 import api from "../api/axios";
+import type { DistributorOverview, ExportManager, Substitution } from "../types/common";
+import SubstitutionModal from "../modals/SubstitutionModal";
 
-type DistributorOverview = {
-  id: string;
-  company_name: string;
-  country: string;
-  currency: string;
-  is_active: boolean;
-  exportManager?: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  latestSalesData?: {
-    year: number;
-    quarter: number;
-    totalSales: number;
-    totalSalesEur: number;
-  };
-  latestPurchaseData?: {
-    year: number;
-    quarter: number;
-    actualSales: number;
-    budget: number;
-    totalPos: number;
-  };
-};
-
-type Substitution = {
-  id: string;
-  exportManager: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  substitute: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  start_date: string;
-  end_date: string;
-  is_active: boolean;
-  createdBy?: {
-    id: string;
-    first_name: string;
-    last_name: string;
-  };
-  created_at: string;
-};
-
-type ExportManager = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-};
 
 export default function ExportManagerPage() {
   const { currentUser } = useAuth();
@@ -80,12 +24,6 @@ export default function ExportManagerPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const [showSubstitutionForm, setShowSubstitutionForm] = useState<boolean>(false);
-  const [substitutionForm, setSubstitutionForm] = useState({
-    exportManagerId: "",
-    substituteId: "",
-    startDate: "",
-    endDate: "",
-  });
 
   const [activeTab, setActiveTab] = useState<"overview" | "substitutions">("overview");
 
@@ -159,39 +97,7 @@ export default function ExportManagerPage() {
     }
   };
 
-  const handleCreateSubstitution = async () => {
-    if (!substitutionForm.exportManagerId || !substitutionForm.substituteId ||
-      !substitutionForm.startDate || !substitutionForm.endDate) {
-      alert("Please fill all fields");
-      return;
-    }
-
-    if (new Date(substitutionForm.startDate) >= new Date(substitutionForm.endDate)) {
-      alert("Start date must be before end date");
-      return;
-    }
-
-    try {
-      await createSubstitution({
-        url: "/export-manager/substitutions",
-        method: "POST",
-        data: substitutionForm,
-      });
-
-      setShowSubstitutionForm(false);
-      setSubstitutionForm({
-        exportManagerId: "",
-        substituteId: "",
-        startDate: "",
-        endDate: "",
-      });
-      loadSubstitutions();
-      alert("Substitution created successfully");
-    } catch (error: any) {
-      alert("Error creating substitution: " + (error.message || error));
-    }
-  };
-
+  
   const handleDeactivateSubstitution = async (id: string) => {
     if (!confirm("Are you sure you want to deactivate this substitution?")) return;
 
@@ -657,100 +563,23 @@ export default function ExportManagerPage() {
       )}
 
       {showSubstitutionForm && isAdminOrSuperAdmin && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-surface p-6 rounded-lg border border-surfaceLight w-full max-w-md">
-            <h2 className="text-lg font-semibold text-white mb-4">Create Substitution</h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-grey mb-2">Export Manager</label>
-                <select
-                  value={substitutionForm.exportManagerId}
-                  onChange={(e) => setSubstitutionForm(prev => ({
-                    ...prev,
-                    exportManagerId: e.target.value
-                  }))}
-                  className="w-full bg-bg text-white px-3 py-2 rounded border border-surfaceLight focus:border-accent-bg focus:outline-none"
-                >
-                  <option value="">Select Export Manager</option>
-                  {exportManagers.map(manager => (
-                    <option key={manager.id} value={manager.id}>
-                      {manager.first_name} {manager.last_name} ({manager.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-grey mb-2">Substitute</label>
-                <select
-                  value={substitutionForm.substituteId}
-                  onChange={(e) => setSubstitutionForm(prev => ({
-                    ...prev,
-                    substituteId: e.target.value
-                  }))}
-                  className="w-full bg-bg text-white px-3 py-2 rounded border border-surfaceLight focus:border-accent-bg focus:outline-none"
-                >
-                  <option value="">Select Substitute</option>
-                  {exportManagers.filter(m => m.id !== substitutionForm.exportManagerId).map(manager => (
-                    <option key={manager.id} value={manager.id}>
-                      {manager.first_name} {manager.last_name} ({manager.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-grey mb-2">Start Date</label>
-                <input
-                  type="date"
-                  value={substitutionForm.startDate}
-                  onChange={(e) => setSubstitutionForm(prev => ({
-                    ...prev,
-                    startDate: e.target.value
-                  }))}
-                  className="w-full bg-bg text-white px-3 py-2 rounded border border-surfaceLight focus:border-accent-bg focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-grey mb-2">End Date</label>
-                <input
-                  type="date"
-                  value={substitutionForm.endDate}
-                  onChange={(e) => setSubstitutionForm(prev => ({
-                    ...prev,
-                    endDate: e.target.value
-                  }))}
-                  className="w-full bg-bg text-white px-3 py-2 rounded border border-surfaceLight focus:border-accent-bg focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleCreateSubstitution}
-                className="flex-1 px-4 py-2 bg-accent-bg hover:bg-accent-hover rounded-md text-white"
-              >
-                Create
-              </button>
-              <button
-                onClick={() => {
-                  setShowSubstitutionForm(false);
-                  setSubstitutionForm({
-                    exportManagerId: "",
-                    substituteId: "",
-                    startDate: "",
-                    endDate: "",
-                  });
-                }}
-                className="flex-1 px-4 py-2 bg-surfaceLight hover:bg-surface rounded-md text-white"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <SubstitutionModal
+          exportManagers={exportManagers}
+          onClose={() => setShowSubstitutionForm(false)}
+          onCreate={async (form) => {
+            try {
+              await createSubstitution({
+                url: "/export-manager/substitutions",
+                method: "POST",
+                data: form,
+              });
+              loadSubstitutions();
+              alert("Substitution created successfully");
+            } catch (error: any) {
+              alert("Error creating substitution: " + (error.message || error));
+            }
+          }}
+        />
       )}
     </div>
   );

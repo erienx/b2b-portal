@@ -111,7 +111,7 @@ function DashboardPage() {
             case UserRole.DISTRIBUTOR:
                 return 'Distributor';
             case UserRole.EMPLOYEE:
-                return 'Distributor Employee';
+                return 'Employee';
             default:
                 return role;
         }
@@ -167,15 +167,7 @@ function DashboardPage() {
                     </div>
                 )}
 
-                <div className="bg-surface p-6 rounded-lg border border-surfaceLight">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-grey">Account Status</p>
-                            <p className="text-xl font-semibold text-green-400">Active</p>
-                        </div>
-                        <Activity className="h-8 w-8 text-green-500" />
-                    </div>
-                </div>
+
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

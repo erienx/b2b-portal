@@ -29,7 +29,7 @@ export default function SalesChannelsPage() {
 
     const { fetch: postReport } = useApi<any>(null);
     const { fetch: importFile } = useApi<any>(null);
-    const { fetch: fetchDistributors } = useApi<{ distributors: Distributor[] }>({ url: "/distributors", method: "GET" });
+    const { fetch: fetchDistributors } = useApi<{ distributors: Distributor[] }>({ url: "/distributors/list/all", method: "GET" });
     const { fetch: fetchReport } = useApi<any>(null);
     const { fetch: addClientApi } = useApi<any>(null);
     const { fetch: addSkuApi } = useApi<any>(null);
@@ -48,35 +48,35 @@ export default function SalesChannelsPage() {
         );
     }, [professionalSales, pharmacySales, ecomB2cSales, ecomB2bSales, thirdPartySales, otherSales]);
 
-    useEffect(() => {
-        if (currentUser && ["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role)) {
-            fetchDistributors().then((res) => setDistributors(res?.distributors || []));
-        }
-    }, [currentUser]);
-
-    const loadReport = () => {
+    const loadReport = async (opts?: { year?: number; quarter?: number; distributorId?: string }) => {
         if (!currentUser) return;
 
-        let url = `/sales-channels/fetch?year=${year}&quarter=${quarter}`;
-        if (["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role) && selectedDistributor) {
-            url += `&distributorId=${selectedDistributor}`;
+        const y = opts?.year ?? year;
+        const q = opts?.quarter ?? quarter;
+        const dist = opts?.distributorId ?? selectedDistributor;
+
+        if (["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role) && !dist) {
+            setReportId(null);
+            setProfessionalSales(0);
+            setPharmacySales(0);
+            setEcomB2cSales(0);
+            setEcomB2bSales(0);
+            setThirdPartySales(0);
+            setOtherSales(0);
+            setNewClientsCount(0);
+            setSkuLines([]);
+            setClients([]);
+            return;
         }
 
-        fetchReport({ url, method: "GET" })
-            .then((data) => {
-                if (!data) return;
-                setReportId(data.id || null);
-                setProfessionalSales(data.professional_sales || 0);
-                setPharmacySales(data.pharmacy_sales || 0);
-                setEcomB2cSales(data.ecommerce_b2c_sales || 0);
-                setEcomB2bSales(data.ecommerce_b2b_sales || 0);
-                setThirdPartySales(data.third_party_sales || 0);
-                setOtherSales(data.other_sales || 0);
-                setNewClientsCount(data.new_clients || 0);
-                setSkuLines(data.skuReports || []);
-                setClients(data.clients || []);
-            })
-            .catch(() => {
+        let url = `/sales-channels/fetch?year=${y}&quarter=${q}`;
+        if (["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role) && dist) {
+            url += `&distributorId=${dist}`;
+        }
+
+        try {
+            const data = await fetchReport({ url, method: "GET" });
+            if (!data) {
                 setReportId(null);
                 setProfessionalSales(0);
                 setPharmacySales(0);
@@ -87,12 +87,64 @@ export default function SalesChannelsPage() {
                 setNewClientsCount(0);
                 setSkuLines([]);
                 setClients([]);
-            });
+                return;
+            }
+            setReportId(data.id || null);
+            setProfessionalSales(data.professional_sales || 0);
+            setPharmacySales(data.pharmacy_sales || 0);
+            setEcomB2cSales(data.ecommerce_b2c_sales || 0);
+            setEcomB2bSales(data.ecommerce_b2b_sales || 0);
+            setThirdPartySales(data.third_party_sales || 0);
+            setOtherSales(data.other_sales || 0);
+            setNewClientsCount(data.new_clients || 0);
+            setSkuLines(data.skuReports || []);
+            setClients(data.clients || []);
+        } catch (err: any) {
+            console.error("Failed to load report:", err);
+            setReportId(null);
+            setProfessionalSales(0);
+            setPharmacySales(0);
+            setEcomB2cSales(0);
+            setEcomB2bSales(0);
+            setThirdPartySales(0);
+            setOtherSales(0);
+            setNewClientsCount(0);
+            setSkuLines([]);
+            setClients([]);
+        }
     };
 
     useEffect(() => {
+        if (currentUser && ["ADMIN", "SUPER_ADMIN", "EXPORT_MANAGER"].includes(currentUser.role)) {
+            fetchDistributors()
+                .then((res) => setDistributors(res?.distributors || []))
+                .catch((err) => {
+                    console.error("Failed to fetch distributors:", err);
+                    setDistributors([]);
+                });
+        }
+
         loadReport();
-    }, [year, quarter, selectedDistributor, currentUser]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUser]); 
+
+    const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newYear = Number(e.target.value);
+        setYear(newYear);
+        loadReport({ year: newYear, quarter, distributorId: selectedDistributor });
+    };
+
+    const handleQuarterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newQuarter = Number(e.target.value);
+        setQuarter(newQuarter);
+        loadReport({ year, quarter: newQuarter, distributorId: selectedDistributor });
+    };
+
+    const handleDistributorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newDistributor = e.target.value;
+        setSelectedDistributor(newDistributor);
+        loadReport({ year, quarter, distributorId: newDistributor });
+    };
 
     const handleAddSku = () => {
         setSkuLines((prev) => [...prev, { sku: "", month: 1,  quantity: 0, value: 0 }]);
@@ -162,8 +214,7 @@ export default function SalesChannelsPage() {
                 }
             }
 
-            loadReport();
-
+            await loadReport(); 
             alert("Saved");
         } catch (err: any) {
             alert("Error: " + (err.message || err));
@@ -220,7 +271,7 @@ export default function SalesChannelsPage() {
                     <label className="text-grey mr-2">Select Distributor:</label>
                     <select
                         value={selectedDistributor}
-                        onChange={(e) => setSelectedDistributor(e.target.value)}
+                        onChange={handleDistributorChange}
                         className="bg-bg text-white px-2 py-1 rounded"
                     >
                         <option value="">-- Select --</option>
@@ -246,7 +297,7 @@ export default function SalesChannelsPage() {
                                 <label className="text-grey">Year</label>
                                 <select
                                     value={year}
-                                    onChange={(e) => setYear(Number(e.target.value))}
+                                    onChange={handleYearChange}
                                     className="bg-bg text-white px-2 py-1 rounded"
                                 >
                                     {Array.from({ length: 5 }).map((_, i) => {
@@ -262,7 +313,7 @@ export default function SalesChannelsPage() {
                                 <label className="text-grey">Quarter</label>
                                 <select
                                     value={quarter}
-                                    onChange={(e) => setQuarter(Number(e.target.value))}
+                                    onChange={handleQuarterChange}
                                     className="bg-bg text-white px-2 py-1 rounded"
                                 >
                                     <option value={1}>Q1</option>
