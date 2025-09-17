@@ -52,7 +52,7 @@ interface AddDistributorModalProps {
 
 export function AddDistributorModal({ isOpen, onClose, onSuccess }: AddDistributorModalProps) {
     const [availableUsers, setAvailableUsers] = useState<User[]>([]);
-    
+
     const {
         data: exportManagers,
         fetch: fetchExportManagers,
@@ -139,7 +139,11 @@ export function AddDistributorModal({ isOpen, onClose, onSuccess }: AddDistribut
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div
+            className="fixed inset-0 flex items-center justify-center z-50"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
+        >
+
             <div className="bg-surface p-6 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-white">Add New Distributor</h2>
@@ -238,8 +242,8 @@ export function AddDistributorModal({ isOpen, onClose, onSuccess }: AddDistribut
                         >
                             Cancel
                         </button>
-                        <ButtonSubmit 
-                            isSubmitting={isSubmitting} 
+                        <ButtonSubmit
+                            isSubmitting={isSubmitting}
                             btnText="Create Distributor"
                             className="flex-1"
                         />
