@@ -360,4 +360,34 @@ export class UsersService {
 
         await this.activityLogRepository.save(log);
     }
+
+    async toggleActiveStatus(id: string, isActive: boolean, updaterId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+
+    if (!user) {
+        throw new NotFoundException('User not found');
+    }
+
+    if (user.role === UserRole.SUPER_ADMIN && !isActive) {
+        const superAdminCount = await this.userRepository.count({
+            where: { role: UserRole.SUPER_ADMIN, is_active: true },
+        });
+
+        if (superAdminCount <= 1) {
+            throw new ForbiddenException('Cannot deactivate the last super admin');
+        }
+    }
+
+    user.is_active = isActive;
+    const savedUser = await this.userRepository.save(user);
+
+    await this.logUserActivity(
+        updaterId,
+        UserAction.LOGIN,
+        `${isActive ? 'Activated' : 'Deactivated'} user: ${user.email}`,
+    );
+
+    return this.sanitizeUser(savedUser);
+}
+
 }

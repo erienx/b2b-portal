@@ -10,6 +10,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from 'src/common/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { ToggleActiveDto } from './dto/toggle-active.dto';
 
 
 @Controller('users')
@@ -96,4 +97,16 @@ export class UsersController {
     ) {
         return this.usersService.getUserActivity(id, page, limit);
     }
+
+    @Post(':id/toggle-active')
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @HttpCode(HttpStatus.OK)
+    toggleActive(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body() toggleActiveDto: ToggleActiveDto,
+        @GetUser() updater: User,
+    ) {
+        return this.usersService.toggleActiveStatus(id, toggleActiveDto.isActive, updater.id);
+    }
+
 }

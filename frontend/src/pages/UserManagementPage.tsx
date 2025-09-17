@@ -62,6 +62,7 @@ export default function UserManagementPage() {
 
     const { fetch: unlockUser } = useApi<User>(null);
     const { fetch: createUser } = useApi<User>(null);
+    const { fetch: toggleUserActive } = useApi<User>(null);
 
     const {
         register,
@@ -106,6 +107,35 @@ export default function UserManagementPage() {
             console.error("Failed to create user:", err);
         }
     };
+    const handleToggleActive = async (id: string, isActive: boolean) => {
+        try {
+            await toggleUserActive({
+                url: `/users/${id}/toggle-active`,
+                method: "POST",
+                data: { isActive },
+            });
+            await fetchUsers();
+        } catch (err) {
+            console.error(err);
+        }
+    };
+    const canToggleActive = (currentUser: User, targetUser: User) => {
+        if (!currentUser) return false;
+        if (currentUser.id === targetUser.id) return false;
+
+        const roleHierarchy: Record<User["role"], number> = {
+            EMPLOYEE: 1,
+            DISTRIBUTOR: 2,
+            EXPORT_MANAGER: 3,
+            ADMIN: 4,
+            SUPER_ADMIN: 5,
+        };
+
+        return (
+            roleHierarchy[currentUser.role] > roleHierarchy[targetUser.role] &&
+            (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.SUPER_ADMIN)
+        );
+    };
 
     const roleHierarchy: Record<User["role"], number> = {
         EMPLOYEE: 1,
@@ -139,23 +169,18 @@ export default function UserManagementPage() {
         }
     };
 
-    const getExportManagersForRole = (role: UserRole) => {
-        if (role !== UserRole.DISTRIBUTOR || !users?.users) return [];
-        return users.users.filter(user => user.role === UserRole.EXPORT_MANAGER);
-    };
 
     if (loading) return <div className="text-white">Loading users...</div>;
     if (error) return <div className="text-red-500">Error: {error}</div>;
 
     return (
         <div>
-            {/* Tab Navigation */}
             <div className="flex space-x-4 mb-6">
                 <button
                     onClick={() => setActiveTab('users')}
                     className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'users'
-                            ? 'bg-accent-bg text-white'
-                            : 'bg-surfaceLight text-grey hover:text-white'
+                        ? 'bg-accent-bg text-white'
+                        : 'bg-surfaceLight text-grey hover:text-white'
                         }`}
                 >
                     Users
@@ -163,15 +188,14 @@ export default function UserManagementPage() {
                 <button
                     onClick={() => setActiveTab('distributors')}
                     className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'distributors'
-                            ? 'bg-accent-bg text-white'
-                            : 'bg-surfaceLight text-grey hover:text-white'
+                        ? 'bg-accent-bg text-white'
+                        : 'bg-surfaceLight text-grey hover:text-white'
                         }`}
                 >
                     Distributors
                 </button>
             </div>
 
-            {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-white">
                     {activeTab === 'users' ? 'User Management' : 'Distributor Management'}
@@ -200,7 +224,6 @@ export default function UserManagementPage() {
                 )}
             </div>
 
-            {/* Users Tab */}
             {activeTab === 'users' && (
                 <>
                     {loading && <div className="text-white">Loading users...</div>}
@@ -237,21 +260,33 @@ export default function UserManagementPage() {
                                             <td className="px-4 py-3 text-grey">{user.role.replace('_', ' ')}</td>
                                             <td className="px-4 py-3">
                                                 {user.isLocked ? (
-                                                    <span className="text-red-500 font-medium">Locked</span>
+                                                    <span className="text-rose-400 font-medium">Locked</span>
+                                                ) : user.isActive ? (
+                                                    <span className="text-emerald-400">Active</span>
                                                 ) : (
-                                                    <span className="text-green-400">Active</span>
+                                                    <span className="text-zinc-400">Inactive</span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                {currentUser && canUnlock(currentUser, user) ? (
+                                            <td className="px-4 py-3 flex gap-2">
+                                                {currentUser && canUnlock(currentUser, user) && (
                                                     <button
                                                         onClick={() => handleUnlock(user.id)}
                                                         className="flex items-center gap-2 bg-accent-bg hover:bg-accent-hover text-white px-3 py-1 rounded-md transition cursor-pointer"
                                                     >
                                                         <Unlock className="w-4 h-4" /> Unlock
                                                     </button>
-                                                ) : (
-                                                    <span className="text-grey">—</span>
+                                                )}
+
+                                                {currentUser && canToggleActive(currentUser, user) && (
+                                                    <button
+                                                        onClick={() => handleToggleActive(user.id, !user.isActive)}
+                                                        className={`flex items-center gap-2 px-3 py-1 rounded-md transition cursor-pointer ${user.isActive
+                                                            ? "bg-rose-500 hover:bg-rose-600 text-white"
+                                                            : "bg-emerald-500 hover:bg-emerald-600 text-white"
+                                                            }`}
+                                                    >
+                                                        {user.isActive ? "Deactivate" : "Activate"}
+                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
@@ -263,7 +298,6 @@ export default function UserManagementPage() {
                 </>
             )}
 
-            {/* Distributors Tab */}
             {activeTab === 'distributors' && (
                 <>
                     {distributorsLoading && <div className="text-white">Loading distributors...</div>}
@@ -314,7 +348,6 @@ export default function UserManagementPage() {
                 </>
             )}
 
-            {/* Add User Modal */}
             {isAddUserModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-surface p-6 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">

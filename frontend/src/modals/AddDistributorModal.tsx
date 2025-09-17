@@ -96,7 +96,6 @@ export function AddDistributorModal({ isOpen, onClose, onSuccess }: AddDistribut
 
     useEffect(() => {
         if (users?.users) {
-            // Filter users that can be assigned to distributors (DISTRIBUTOR and EMPLOYEE roles)
             const assignableUsers = users.users.filter(
                 user => user.role === "DISTRIBUTOR" || user.role === "EMPLOYEE"
             );
