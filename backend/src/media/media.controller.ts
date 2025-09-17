@@ -1,19 +1,4 @@
-// src/media/media.controller.ts
-import {
-    Controller,
-    Post,
-    UseGuards,
-    UseInterceptors,
-    UploadedFile,
-    Body,
-    Get,
-    Query,
-    StreamableFile,
-    Param,
-    Res,
-    NotFoundException,
-    BadRequestException,
-} from '@nestjs/common';
+import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Body, Get, Query, StreamableFile, Param, Res, NotFoundException, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -71,9 +56,7 @@ export class MediaController {
     async download(@Param('id') id: string, @Res() res: Response) {
         const file = await this.mediaService.getFileStream(id);
         if (!file) throw new NotFoundException('File not found');
-        res.set({
-            'Content-Disposition': `attachment; filename="${file.original_filename}"`,
-        });
+        res.set({ 'Content-Disposition': `attachment; filename="${file.original_filename}"`, });
         file.stream.pipe(res);
     }
 

@@ -27,15 +27,10 @@ export class ExportsService {
         private purchaseReportRepository: Repository<PurchaseReport>,
     ) { }
 
-    async getDistributorsOverview(
-        currentUser: User,
-        country?: string,
-        distributorId?: string,
-    ): Promise<DistributorOverviewDto[]> {
+    async getDistributorsOverview(currentUser: User, country?: string, distributorId?: string,): Promise<DistributorOverviewDto[]> {
         let accessibleDistributorIds: string[] = [];
 
         if (currentUser.role === UserRole.EXPORT_MANAGER) {
-            // Export Manager widzi tylko przypisanych dystrybutorów + zastępstwa
             const directlyManaged = await this.distributorRepository.find({
                 where: { exportManager: { id: currentUser.id } },
                 select: ['id'],
@@ -43,7 +38,6 @@ export class ExportsService {
 
             accessibleDistributorIds = directlyManaged.map(d => d.id);
 
-            // Dodaj dystrybutorów z zastępstw
             const activeSubstitutions = await this.substitutionRepository.find({
                 where: {
                     substitute: { id: currentUser.id },
@@ -62,17 +56,14 @@ export class ExportsService {
                 accessibleDistributorIds.push(...substitutedDistributors.map(d => d.id));
             }
 
-            // Usuń duplikaty
             accessibleDistributorIds = [...new Set(accessibleDistributorIds)];
         }
 
-        // Buduj zapytanie
         const queryBuilder = this.distributorRepository
             .createQueryBuilder('distributor')
             .leftJoinAndSelect('distributor.exportManager', 'exportManager')
             .where('distributor.is_active = :isActive', { isActive: true });
 
-        // Filtrowanie według uprawnień
         if (currentUser.role === UserRole.EXPORT_MANAGER) {
             if (accessibleDistributorIds.length === 0) {
                 return [];
@@ -80,19 +71,16 @@ export class ExportsService {
             queryBuilder.andWhere('distributor.id IN (:...ids)', { ids: accessibleDistributorIds });
         }
 
-        // Filtrowanie według kraju
         if (country) {
             queryBuilder.andWhere('distributor.country = :country', { country });
         }
 
-        // Filtrowanie według konkretnego dystrybutora
         if (distributorId) {
             queryBuilder.andWhere('distributor.id = :distributorId', { distributorId });
         }
 
         const distributors = await queryBuilder.getMany();
 
-        // Pobierz najnowsze dane sprzedażowe i zakupowe dla każdego dystrybutora
         const result: DistributorOverviewDto[] = [];
 
         for (const distributor of distributors) {
@@ -144,7 +132,6 @@ export class ExportsService {
     }
 
     async createSubstitution(dto: CreateSubstitutionDto, createdBy: User): Promise<SubstitutionDto> {
-        // Sprawdź czy export manager istnieje i ma odpowiednią rolę
         const exportManager = await this.userRepository.findOne({
             where: { id: dto.exportManagerId, role: UserRole.EXPORT_MANAGER, is_active: true },
         });
@@ -153,7 +140,6 @@ export class ExportsService {
             throw new NotFoundException('Export Manager not found or inactive');
         }
 
-        // Sprawdź czy substitute istnieje i ma odpowiednią rolę
         const substitute = await this.userRepository.findOne({
             where: {
                 id: dto.substituteId,
@@ -166,7 +152,6 @@ export class ExportsService {
             throw new NotFoundException('Substitute user not found, inactive, or not an Export Manager');
         }
 
-        // Sprawdź czy daty są poprawne
         const startDate = new Date(dto.startDate);
         const endDate = new Date(dto.endDate);
 
@@ -174,7 +159,6 @@ export class ExportsService {
             throw new BadRequestException('Start date must be before end date');
         }
 
-        // Sprawdź czy nie ma nakładających się zastępstw
         const overlapping = await this.substitutionRepository
             .createQueryBuilder('sub')
             .where('sub.exportManager.id = :exportManagerId', { exportManagerId: dto.exportManagerId })
@@ -214,7 +198,6 @@ export class ExportsService {
         let whereCondition = {};
 
         if (currentUser.role === UserRole.EXPORT_MANAGER) {
-            // Export Manager widzi tylko swoje zastępstwa (jako główny lub zastępca)
             whereCondition = [
                 { exportManager: { id: currentUser.id } },
                 { substitute: { id: currentUser.id } },
@@ -240,7 +223,6 @@ export class ExportsService {
             throw new NotFoundException('Substitution not found');
         }
 
-        // Sprawdź uprawnienia
         if (currentUser.role === UserRole.EXPORT_MANAGER) {
             const isInvolved = substitution.exportManager.id === currentUser.id ||
                 substitution.substitute.id === currentUser.id;
@@ -266,17 +248,14 @@ export class ExportsService {
             throw new NotFoundException('Substitution not found');
         }
 
-        // Sprawdź uprawnienia - tylko admini i super-admini mogą edytować
         if (![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(updatedBy.role)) {
             throw new ForbiddenException('Access denied');
         }
 
-        // Aktualizuj pola
         if (dto.startDate) substitution.start_date = new Date(dto.startDate);
         if (dto.endDate) substitution.end_date = new Date(dto.endDate);
         if (dto.isActive !== undefined) substitution.is_active = dto.isActive;
 
-        // Sprawdź czy daty są poprawne
         if (substitution.start_date >= substitution.end_date) {
             throw new BadRequestException('Start date must be before end date');
         }
@@ -303,7 +282,6 @@ export class ExportsService {
             throw new NotFoundException('Substitution not found');
         }
 
-        // Sprawdź uprawnienia
         if (![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(currentUser.role)) {
             throw new ForbiddenException('Access denied');
         }
@@ -348,13 +326,7 @@ export class ExportsService {
         };
     }
 
-    async exportFullCsv(
-        currentUser: User,
-        country?: string,
-        year?: number,
-        quarter?: number
-    ): Promise<string> {
-        // Tylko ADMIN i SUPER_ADMIN mogą eksportować wszystkie dane
+    async exportFullCsv(currentUser: User, country?: string, year?: number, quarter?: number): Promise<string> {
         if (![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(currentUser.role)) {
             throw new ForbiddenException('Insufficient permissions for full export');
         }
@@ -363,19 +335,12 @@ export class ExportsService {
         return this.generateCsvData(distributors, year, quarter);
     }
 
-    async exportAssignedCsv(
-        currentUser: User,
-        distributorIds?: string[],
-        year?: number,
-        quarter?: number
-    ): Promise<string> {
+    async exportAssignedCsv(currentUser: User, distributorIds?: string[], year?: number, quarter?: number): Promise<string> {
         let distributors: Distributor[];
 
         if (currentUser.role === UserRole.EXPORT_MANAGER) {
-            // Export Manager widzi tylko przypisanych dystrybutorów
             distributors = await this.getDistributorsForUser(currentUser);
 
-            // Jeśli podano konkretne ID, filtruj tylko te które są przypisane
             if (distributorIds && distributorIds.length > 0) {
                 const assignedIds = distributors.map(d => d.id);
                 const requestedIds = distributorIds.filter(id => assignedIds.includes(id));
@@ -387,7 +352,6 @@ export class ExportsService {
                 distributors = distributors.filter(d => requestedIds.includes(d.id));
             }
         } else if ([UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(currentUser.role)) {
-            // Admin może eksportować wybrane dystrybutorów lub wszystkich
             if (distributorIds && distributorIds.length > 0) {
                 distributors = await this.distributorRepository.find({
                     where: { id: In(distributorIds) },
@@ -445,10 +409,7 @@ export class ExportsService {
         return [];
     }
 
-    private async getDistributorsForExport(
-        currentUser: User,
-        country?: string
-    ): Promise<Distributor[]> {
+    private async getDistributorsForExport(currentUser: User, country?: string): Promise<Distributor[]> {
         const queryBuilder = this.distributorRepository
             .createQueryBuilder('distributor')
             .leftJoinAndSelect('distributor.exportManager', 'exportManager');
@@ -460,11 +421,7 @@ export class ExportsService {
         return queryBuilder.getMany();
     }
 
-    private async generateCsvData(
-        distributors: Distributor[],
-        year?: number,
-        quarter?: number
-    ): Promise<string> {
+    private async generateCsvData(distributors: Distributor[], year?: number, quarter?: number): Promise<string> {
         const csvHeaders = [
             'Distributor',
             'Currency',
@@ -520,14 +477,12 @@ export class ExportsService {
             const salesReports = await salesQuery.getMany();
             const purchaseReports = await purchaseQuery.getMany();
 
-            // Jeśli nie ma danych, dodaj pustą linię dla dystrybutora
             if (salesReports.length === 0 && purchaseReports.length === 0) {
                 const emptyRow = this.createEmptyRow(distributor);
                 csvRows.push(emptyRow);
                 continue;
             }
 
-            // Łącz dane sales i purchase po roku/kwartale
             const dataMap = new Map<string, { sales?: SalesChannelsReport; purchase?: PurchaseReport }>();
 
             salesReports.forEach(sr => {
@@ -556,26 +511,19 @@ export class ExportsService {
         return [
             this.escapeCsvValue(distributor.company_name),
             distributor.currency,
-            '', // Year
-            '', // Quarter
-            ...Array(24).fill('') // Wszystkie pozostałe kolumny puste
+            '',
+            '',
+            ...Array(24).fill('')
         ].join(',');
     }
 
-    private createDataRow(
-        distributor: Distributor,
-        sales?: SalesChannelsReport,
-        purchase?: PurchaseReport,
-        year?: string,
-        quarter?: string
-    ): string {
+    private createDataRow(distributor: Distributor, sales?: SalesChannelsReport, purchase?: PurchaseReport, year?: string, quarter?: string): string {
         const row = [
             this.escapeCsvValue(distributor.company_name),
             sales?.currency || distributor.currency,
             year || '',
             quarter || '',
 
-            // Sales Channels dane w oryginalnej walucie
             sales?.professional_sales?.toString() || '',
             sales?.pharmacy_sales?.toString() || '',
             sales?.ecommerce_b2c_sales?.toString() || '',
@@ -585,7 +533,6 @@ export class ExportsService {
             sales?.total_sales?.toString() || '',
             sales?.new_clients?.toString() || '',
 
-            // Sales Channels dane w EUR
             sales?.professional_sales && sales?.currency_rate
                 ? (Number(sales.professional_sales) * Number(sales.currency_rate)).toFixed(2)
                 : '',
@@ -606,13 +553,11 @@ export class ExportsService {
                 : '',
             sales?.total_sales_eur?.toString() || '',
 
-            // Purchase Report dane
             purchase?.last_year_sales?.toString() || '',
             purchase?.purchases?.toString() || '',
             purchase?.budget?.toString() || '',
             purchase?.actual_sales?.toString() || '',
 
-            // Automatyczne obliczenia Purchase Report
             purchase && purchase.actual_sales && purchase.last_year_sales
                 ? (Number(purchase.actual_sales) - Number(purchase.last_year_sales)).toFixed(2)
                 : '',
@@ -631,9 +576,7 @@ export class ExportsService {
     private escapeCsvValue(value: string): string {
         if (!value) return '';
 
-        // Jeśli wartość zawiera przecinek, cudzysłów lub znak nowej linii, otocz cudzysłowami
         if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
-            // Podwój wszystkie cudzysłowy wewnętrzne
             const escaped = value.replace(/"/g, '""');
             return `"${escaped}"`;
         }

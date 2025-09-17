@@ -1,10 +1,4 @@
-import {
-    Injectable,
-    NotFoundException,
-    ConflictException,
-    ForbiddenException,
-    BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as argon2 from 'argon2';
@@ -183,10 +177,7 @@ export class UsersService {
         }
     }
 
-    async getAllActivity(
-        page = 1,
-        limit = 50
-    ): Promise<{ logs: UserActivityLog[], total: number, totalPages: number }> {
+    async getAllActivity(page = 1, limit = 50): Promise<{ logs: UserActivityLog[], total: number, totalPages: number }> {
         const [logs, total] = await this.activityLogRepository.findAndCount({
             skip: (page - 1) * limit,
             take: limit,

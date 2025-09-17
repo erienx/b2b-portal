@@ -1,18 +1,4 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
-    Query,
-    UseGuards,
-    ParseUUIDPipe,
-    HttpCode,
-    HttpStatus,
-    Res,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, ParseUUIDPipe, HttpCode, HttpStatus, Res, } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ExportsService } from './exports.service';
 import { CreateSubstitutionDto } from './dto/create-substitution.dto';
@@ -106,12 +92,7 @@ export class ExportsController {
         @Query('quarter') quarter?: number,
 
     ) {
-        const csvData = await this.exportManagerService.exportFullCsv(
-            currentUser,
-            country,
-            year,
-            quarter
-        );
+        const csvData = await this.exportManagerService.exportFullCsv(currentUser, country, year, quarter);
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename="distributors_full_export.csv"');
@@ -138,7 +119,7 @@ export class ExportsController {
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename="assigned_distributors_export.csv"');
-        res.send('\uFEFF' + csvData); // BOM dla UTF-8
+        res.send('\uFEFF' + csvData); 
     }
 
 

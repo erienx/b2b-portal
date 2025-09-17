@@ -1,5 +1,4 @@
 import { IsNumber, IsOptional, IsUUID, Min, IsArray, ValidateNested, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
 
 export class CreateSalesReportDto {
     @IsNumber()

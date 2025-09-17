@@ -23,14 +23,6 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  // app.enableCors({
-  //   origin: configService.get<string>('NODE_ENV') === 'development'
-  //     ? 'http://localhost:3001'
-  //     : ['https://prod.com'], // for prod
-  //   credentials: true,
-  //   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  //   allowedHeaders: ['Content-Type', 'Authorization'],
-  // });
 
   app.useGlobalPipes(new ValidationPipe({
     transform: true,

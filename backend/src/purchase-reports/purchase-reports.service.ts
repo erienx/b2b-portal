@@ -39,25 +39,23 @@ export class PurchaseReportsService {
         const distributor = await this.distributorRepo.findOne({ where: { id: distributorId } });
         if (!distributor) throw new NotFoundException('Distributor not found');
 
-        console.log(`Looking for sales report for distributor: ${distributorId}, year: ${dto.year}, quarter: ${dto.quarter}`);
-        
+
         const salesReport = await this.salesRepo.findOne({
-            where: { 
-                distributor: { id: distributorId }, 
-                year: dto.year, 
-                quarter: dto.quarter 
+            where: {
+                distributor: { id: distributorId },
+                year: dto.year,
+                quarter: dto.quarter
             },
             relations: ['distributor']
         });
 
-        console.log('Found sales report:', salesReport);
 
         let actualSales = 0;
         if (salesReport) {
             if (salesReport.total_sales && salesReport.total_sales > 0) {
                 actualSales = Number(salesReport.total_sales);
             } else {
-                actualSales = 
+                actualSales =
                     Number(salesReport.professional_sales || 0) +
                     Number(salesReport.pharmacy_sales || 0) +
                     Number(salesReport.ecommerce_b2c_sales || 0) +
@@ -67,7 +65,6 @@ export class PurchaseReportsService {
             }
         }
 
-        console.log('Calculated actual sales:', actualSales);
 
         let report = await this.purchaseRepo.findOne({
             where: { distributor: { id: distributorId }, year: dto.year, quarter: dto.quarter },
@@ -89,8 +86,7 @@ export class PurchaseReportsService {
         report.createdBy = createdBy;
 
         const savedReport = await this.purchaseRepo.save(report);
-        console.log('Saved report with actual_sales:', savedReport.actual_sales);
-        
+
         return savedReport;
     }
 
@@ -101,10 +97,10 @@ export class PurchaseReportsService {
         });
 
         const salesReport = await this.salesRepo.findOne({
-            where: { 
-                distributor: { id: distributorId }, 
-                year, 
-                quarter 
+            where: {
+                distributor: { id: distributorId },
+                year,
+                quarter
             },
             relations: ['distributor']
         });
@@ -114,7 +110,7 @@ export class PurchaseReportsService {
             if (salesReport.total_sales && salesReport.total_sales > 0) {
                 actualSales = Number(salesReport.total_sales);
             } else {
-                actualSales = 
+                actualSales =
                     Number(salesReport.professional_sales || 0) +
                     Number(salesReport.pharmacy_sales || 0) +
                     Number(salesReport.ecommerce_b2c_sales || 0) +
@@ -132,7 +128,7 @@ export class PurchaseReportsService {
                 last_year_sales: 0,
                 purchases: 0,
                 budget: 0,
-                actual_sales: actualSales, 
+                actual_sales: actualSales,
                 total_pos: 0,
                 new_openings: 0,
                 new_openings_target: 0,
@@ -155,7 +151,7 @@ export class PurchaseReportsService {
 
         return {
             ...report,
-            actual_sales: actualSales, 
+            actual_sales: actualSales,
             totalYearVsLastYear,
             totalYearVsBudget,
         };
@@ -181,10 +177,10 @@ export class PurchaseReportsService {
         const enhancedReports = await Promise.all(
             reports.map(async (report) => {
                 const salesReport = await this.salesRepo.findOne({
-                    where: { 
-                        distributor: { id: report.distributor.id }, 
-                        year: report.year, 
-                        quarter: report.quarter 
+                    where: {
+                        distributor: { id: report.distributor.id },
+                        year: report.year,
+                        quarter: report.quarter
                     }
                 });
 
@@ -193,7 +189,7 @@ export class PurchaseReportsService {
                     if (salesReport.total_sales && salesReport.total_sales > 0) {
                         actualSales = Number(salesReport.total_sales);
                     } else {
-                        actualSales = 
+                        actualSales =
                             Number(salesReport.professional_sales || 0) +
                             Number(salesReport.pharmacy_sales || 0) +
                             Number(salesReport.ecommerce_b2c_sales || 0) +
@@ -227,9 +223,9 @@ export class PurchaseReportsService {
 
     async isDistributorAssignedToManager(distributorId: string, managerId: string): Promise<boolean> {
         const distributor = await this.distributorRepo.findOne({
-            where: { 
-                id: distributorId, 
-                exportManager: { id: managerId } 
+            where: {
+                id: distributorId,
+                exportManager: { id: managerId }
             }
         });
 
@@ -245,12 +241,12 @@ export class PurchaseReportsService {
         const enhancedData = await Promise.all(
             Array.from({ length: 4 }, (_, i) => i + 1).map(async (quarter) => {
                 const report = reports.find(r => r.quarter === quarter);
-                
+
                 const salesReport = await this.salesRepo.findOne({
-                    where: { 
-                        distributor: { id: distributorId }, 
-                        year, 
-                        quarter 
+                    where: {
+                        distributor: { id: distributorId },
+                        year,
+                        quarter
                     }
                 });
 
@@ -259,7 +255,7 @@ export class PurchaseReportsService {
                     if (salesReport.total_sales && salesReport.total_sales > 0) {
                         actualSales = Number(salesReport.total_sales);
                     } else {
-                        actualSales = 
+                        actualSales =
                             Number(salesReport.professional_sales || 0) +
                             Number(salesReport.pharmacy_sales || 0) +
                             Number(salesReport.ecommerce_b2c_sales || 0) +
@@ -287,15 +283,15 @@ export class PurchaseReportsService {
         return enhancedData;
     }
 
-    async debugSalesData(distributorId: string, year: number, quarter: number) {
+    async getSalesData(distributorId: string, year: number, quarter: number) {
         console.log(`=== DEBUG SALES DATA ===`);
         console.log(`Distributor: ${distributorId}, Year: ${year}, Quarter: ${quarter}`);
-        
+
         const salesReports = await this.salesRepo.find({
             where: { distributor: { id: distributorId } },
             relations: ['distributor']
         });
-        
+
         console.log(`Found ${salesReports.length} sales reports for distributor`);
         salesReports.forEach(report => {
             console.log(`Report: Y${report.year} Q${report.quarter} - Total: ${report.total_sales}`);
@@ -316,7 +312,7 @@ export class PurchaseReportsService {
         } else {
             console.log('No specific report found for this year/quarter');
         }
-        
+
         console.log(`=== END DEBUG ===`);
         return specificReport;
     }

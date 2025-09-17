@@ -37,8 +37,7 @@ export class LogsService {
     async getLogs(q: LogsQueryDto) {
         const page = q.page && q.page > 0 ? q.page : 1;
         const limit = q.limit && q.limit > 0 ? Math.min(q.limit, 200) : 50;
-        const qb = this.logsRepo.createQueryBuilder('log')
-            .leftJoinAndSelect('log.user', 'user');
+        const qb = this.logsRepo.createQueryBuilder('log').leftJoinAndSelect('log.user', 'user');
 
         if (q.userId) qb.andWhere('user.id = :userId', { userId: q.userId });
         if (q.action) qb.andWhere('log.action = :action', { action: q.action });
@@ -62,8 +61,7 @@ export class LogsService {
     }
 
     async exportLogsCsv(q: LogsQueryDto) {
-        const qb = this.logsRepo.createQueryBuilder('log')
-            .leftJoinAndSelect('log.user', 'user');
+        const qb = this.logsRepo.createQueryBuilder('log').leftJoinAndSelect('log.user', 'user');
 
         if (q.userId) qb.andWhere('user.id = :userId', { userId: q.userId });
         if (q.action) qb.andWhere('log.action = :action', { action: q.action });

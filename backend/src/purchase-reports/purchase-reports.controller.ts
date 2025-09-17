@@ -81,6 +81,6 @@ export class PurchaseReportsController {
         @Query('year') year: string,
         @Query('quarter') quarter: string
     ) {
-        return this.purchaseService.debugSalesData(distributorId, Number(year), Number(quarter));
+        return this.purchaseService.getSalesData(distributorId, Number(year), Number(quarter));
     }
 }

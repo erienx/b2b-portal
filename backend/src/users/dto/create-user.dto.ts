@@ -1,12 +1,4 @@
-import {
-    IsEmail,
-    IsNotEmpty,
-    IsString,
-    MinLength,
-    IsEnum,
-    IsOptional,
-    MaxLength,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { UserRole } from 'src/common/enums/user-role.enum';
 
