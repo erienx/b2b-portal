@@ -1,8 +1,10 @@
-# Architektura systemu
+# System Architecture
 
-## Przegląd architektury
+## Architecture Overview
 
-System będzie zbudowany w architekturze 3-warstwowej z wyraźnym podziałem odpowiedzialności:
+The system will be built using a 3-layer architecture with a clear separation of responsibilities:
+
+
 
 ```
 [Frontend (React)] ↔ [Backend API (Nest.js)] ↔ [Database (PostgreSQL)]
@@ -10,176 +12,172 @@ System będzie zbudowany w architekturze 3-warstwowej z wyraźnym podziałem odp
                             [File Storage (Local)]
 ```
 
-## Warstwy systemu
+
+## System Layers
 
 ### 1. Frontend (React)
 
-**Odpowiedzialności:**
+**Responsibilities:**
 
-- Interfejs użytkownika (dashboardy, formularze, repozytorium plików)
-- Autoryzacja i zarządzanie sesją użytkownika
-- Walidacja danych po stronie klienta
-- Komunikacja z backend API
+- User interface (dashboards, forms, file repository)
+- Authorization and session management
+- Client-side data validation
+- Communication with backend API
 
-**Komponenty główne:**
+**Main Components:**
 
-- `AuthModule` - logowanie, zarządzanie tokenami JWT
-- `DashboardModule` - główny dashboard użytkownika
-- `SalesChannelsModule` - formularze i widoki sprzedaży
-- `PurchaseReportModule` - raporty zakupowe i dashboardy
-- `MediaModule` - przeglądarka plików
-- `AdminModule` - panel administracyjny
+- `AuthModule` - login and JWT token management (`LoginForm`, `AuthProvider`, `ProtectedRoute`)
+- `DashboardModule` - main user dashboard (`DashboardPage`)
+- `SalesChannelsModule` - sales forms and views (`SalesChannelsPage`)
+- `PurchaseReportModule` - purchase reports and dashboards (`PurchaseReportPage`)
+- `MediaModule` - file browser (`MediaPage`)
+- `AdminModule` - administration panel (`AdminPage`, `UserManagementPage`, `LogsPage`)
+- `ExportManagerModule` - Export Manager dashboard (`ExportManagerPage`)
+- `MainLayout` - application layout for routing (`MainLayout`)
 
-**Technologie:**
+**Technologies:**
 
-- React 18+ z hooks
-- React Router - routing
-- Axios - komunikacja HTTP
-- Material-UI lub podobna biblioteka UI
-- Chart.js - wykresy w dashboardach
+- React 18+ with hooks
+- React Router Dom for routing
+- Axios for HTTP communication
+- Lucide for icons
+- recharts for dashboard charts
 
 ### 2. Backend (Nest.js)
 
-**Odpowiedzialności:**
+**Responsibilities:**
 
-- API REST dla wszystkich operacji
-- Logika biznesowa i walidacja
-- Autentykacja i autoryzacja (JWT + RBAC)
-- Operacje na bazie danych
-- Generowanie raportów i eksportów
-- Zarządzanie plikami
+- REST API for all operations
+- Business logic and validation
+- Authentication and authorization (JWT + RBAC)
+- Database operations
+- Report generation and data export
+- File management
 
-**Moduły aplikacji:**
+**Application Modules:**
 
-- `AuthModule` - autentykacja, autoryzacja
-- `UsersModule` - zarządzanie użytkownikami
-- `DistributorsModule` - zarządzanie dystrybutorami
-- `SalesChannelsModule` - raporty sprzedażowe
-- `PurchaseReportsModule` - raporty zakupowe
-- `MediaModule` - zarządzanie plikami
-- `AdminModule` - funkcje administracyjne
-- `ExportsModule` - eksport danych do CSV
-- `CurrencyModule` - kursy walut (integracja z NBP API)
+- `AuthModule` - authentication and authorization
+- `UsersModule` - user management
+- `DistributorsModule` - distributor management
+- `SalesChannelsModule` - sales reporting
+- `PurchaseReportsModule` - purchase reporting
+- `MediaModule` - file management
+- `AdminModule` - administrative functions
+- `ExportsModule` - data export to CSV
+- `CurrencyModule` - currency rates (NBP API integration)
 
-**Middleware i Guards:**
+**Middleware and Guards:**
 
-- `AuthGuard` - weryfikacja JWT
-- `RolesGuard` - kontrola dostępu na podstawie ról
-- `LoggingInterceptor` - logowanie aktywności
+- `AuthGuard` - JWT verification
+- `RolesGuard` - role-based access control
+- `LoggingInterceptor` - activity logging
 
-### 3. Baza danych (PostgreSQL)
+### 3. Database (PostgreSQL)
 
-**Główne tabele:**
+**Main Tables:**
 
-- `users` - użytkownicy systemu
-- `distributors` - dystrybutorzy
-- `user_distributor_assignments` - przypisania użytkowników
-- `sales_channels_reports` - raporty sprzedażowe
-- `purchase_reports` - raporty zakupowe
-- `media_files` - metadane plików
-- `media_categories` - kategorie plików
-- `user_activity_logs` - logi aktywności
-- `currency_rates` - kursy walut
-- `export_manager_substitutions` - zastępstwa
+- `users` - system users
+- `distributors` - distributors
+- `user_distributor_assignments` - user assignments
+- `sales_channels_reports` - sales reports
+- `purchase_reports` - purchase reports
+- `media_files` - file metadata
+- `media_categories` - file categories
+- `user_activity_logs` - activity logs
+- `currency_rates` - currency rates
+- `export_manager_substitutions` - substitutions
 
-**Optymalizacje:**
+**Optimizations:**
 
-- Indeksy na często wyszukiwanych kolumnach
-- Ograniczenia integralności danych
+- Indexes on frequently queried columns
+- Data integrity constraints
 
-### 4. Przechowywanie plików
+### 4. File Storage
 
-**Struktura katalogów:**
+**Folder Structure Backend:**
 
 ```
 uploads/
-├── products/
-│ └── SKU123/
-│ ├── SKU123_main_1.jpg
-│ └── SKU123_manual.pdf
-└── marketing/
-└── 2025_03/
-└── spring_campaign.jpg
+├── media/
+
 ```
+**Functionalities:**
 
-**Funkcjonalności:**
+- File upload with type and size validation
+- Unique file name generation
+- Metadata stored in the database
+- Secure access through API (authorization required)
 
-- Upload plików z walidacją typu i rozmiaru
-- Generowanie unikalnych nazw plików
-- Metadane przechowywane w bazie danych
-- Bezpieczny dostęp przez API (autoryzacja)
+## Data Flow
 
-## Przepływ danych
+### 1. Authorization
 
-### 1. Autoryzacja
 
 ```
 User → Frontend → Backend (Auth API) → Database → JWT Token → Frontend
 ```
 
-### 2. Operacje CRUD
+### 2. CRUD Operations
 
 ```
 User → Frontend → Backend (API + Guards) → Database → Response → Frontend
 ```
 
-### 3. Upload plików
+### 3. File Upload
 
 ```
 User → Frontend → Backend (Media API) → File Storage + Database → Response
 ```
 
-### 4. Eksport danych
+### 4. Data Export
 
 ```
 Admin → Frontend → Backend (Export API) → Database → CSV File → Download
 ```
+## Security
 
-## Bezpieczeństwo
+### Communication Layer
 
-### Warstwa komunikacji
+- HTTPS for all connections
+- CORS configured for frontend domain
+- Rate limiting on API endpoints
 
-- HTTPS dla wszystkich połączeń
-- CORS skonfigurowane dla frontend domain
-- Rate limiting na API endpoints
+### Authorization and Authentication
 
-### Autoryzacja i autentykacja
-
-- JWT tokeny z rozumnym czasem wygaśnięcia
-- Refresh tokeny dla długotrwałych sesji
+- JWT tokens with reasonable expiration
+- Refresh tokens for long-lived sessions
 - Role-based access control (RBAC)
-- Hierarchiczny system uprawnień
+- Hierarchical permissions system
 
-### Ochrona danych
+### Data Protection
 
-- Hashowanie haseł (argon2)
-- Walidacja i sanityzacja wszystkich inputów
-- Parametryzowane zapytania SQL (TypeORM)
-- Logowanie operacji wrażliwych
+- Password hashing (argon2)
+- Input validation and sanitization
+- Parameterized SQL queries (TypeORM)
+- Logging of sensitive operations
 
-## Monitoring i logi
+## Monitoring and Logging
 
-### Logowanie aktywności
+### Activity Logging
 
-- Wszystkie operacje użytkowników
-- Próby logowania (udane i nieudane)
-- Operacje CRUD na danych
-- Błędy aplikacji
+- All user operations
+- Login attempts (successful and failed)
+- CRUD operations on data
+- Application errors
 
-## Skalowalność
+## Scalability
 
-### Obecne wymagania
+### Current Requirements
 
-- ~80 użytkowników
-- 1-2 jednoczesnych użytkowników
-- Niewielka ilość danych
+- ~80 users
+- 1-2 simultaneous users
+- Small data volume
 
 ## Deployment
 
-### Infrastruktura
+### Infrastructure
 
 - **Backend**: Node.js server
 - **Database**: PostgreSQL server
 - **Frontend**: Static files (nginx)
-- **Files**: Local file system (początkowo)
-
+- **Files**: Local file system (initially)

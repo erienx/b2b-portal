@@ -1,441 +1,403 @@
-# Modele danych
+# Data Models
 
-## Założenia projektowe
+## Project Assumptions
 
-- **Baza danych**: PostgreSQL
-- **Klucze główne**: UUID (generowane automatycznie)
-- **Konwencja nazw**: snake_case dla tabel i kolumn
-- **Encje w Nest.js**: PascalCase (`User`, `Distributor`, `SalesChannelsReport`)
-- **Timestampy**: `created_at`, `updated_at` (automatyczne)
-- **Bezpieczeństwo**: hasła jako hash, blokady kont, logi aktywności
-- **Walutowanie**: wartości oryginalne + EUR + kurs wymiany
-- **Pliki**: metadane w DB, pliki w lokalnym storage
+- **Database**: PostgreSQL  
+- **Primary keys**: UUID (auto-generated)  
+- **Naming convention**: snake_case for tables and columns  
+- **Entities in Nest.js**: PascalCase (`User`, `Distributor`, `SalesChannelsReport`)  
+- **Timestamps**: `created_at`, `updated_at`
+- **Security**: hashed passwords, account locks, activity logs  
+- **Currency**: original values + EUR + exchange rate  
+- **Files**: metadata in DB, files in local storage  
 
 ---
 
 ## Model: `User`
 
-Przechowuje dane wszystkich użytkowników systemu z różnymi rolami.
+Stores all system users with different roles.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `email` - string(255), unikalny, wymagany
-- `password_hash` - string(255), wymagany
-- `first_name` - string(100), wymagany
-- `last_name` - string(100), wymagany
-- `role` - enum: EMPLOYEE | DISTRIBUTOR | EXPORT_MANAGER | ADMIN | SUPER_ADMIN
-- `is_active` - boolean, domyślnie true
-- `is_locked` - boolean, domyślnie false
-- `failed_login_attempts` - integer, domyślnie 0
-- `password_changed_at` - timestamp, nullable
-- `must_change_password` - boolean, domyślnie true
-- `created_at` - timestamp, automatyczny
-- `updated_at` - timestamp, automatyczny
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `email` – string(255), unique, required  
+- `password_hash` – string(255), required  
+- `first_name` – string(100), required  
+- `last_name` – string(100), required  
+- `role` – enum: EMPLOYEE | DISTRIBUTOR | EXPORT_MANAGER | ADMIN | SUPER_ADMIN  
+- `is_active` – boolean, default true  
+- `is_locked` – boolean, default false  
+- `failed_login_attempts` – integer, default 0  
+- `password_changed_at` – timestamp, nullable  
+- `must_change_password` – boolean, default true  
+- `created_at` – timestamp, automatic  
+- `updated_at` – timestamp, automatic  
 
-**Relacje:**
-- One-to-Many z `UserDistributorAssignment` (assignments)
-- One-to-Many z `UserActivityLog` (activityLogs)
-- One-to-Many z `MediaFile` (uploadedFiles)
-- One-to-Many z `Distributor` (managedDistributors jako export manager)
+**Relations:**
+- One-to-Many with `UserDistributorAssignment` (assignments)  
+- One-to-Many with `UserActivityLog` (activityLogs)  
+- One-to-Many with `MediaFile` (uploadedFiles)  
+- One-to-Many with `Distributor` (managedDistributors as export manager)  
 
 ---
 
 ## Model: `Distributor`
 
-Przechowuje dane firm dystrybutorskich.
+Stores distributor company data.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `company_name` - string(255), wymagany
-- `country` - string(2), kod ISO kraju, wymagany
-- `currency` - string(3), kod ISO waluty, wymagany
-- `export_manager_id` - UUID, foreign key do User, nullable
-- `is_active` - boolean, domyślnie true
-- `created_at` - timestamp, automatyczny
-- `updated_at` - timestamp, automatyczny
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `company_name` – string(255), required  
+- `country` – string(2), ISO code, required  
+- `currency` – string(3), ISO code, required  
+- `is_active` – boolean, default true  
+- `created_at` – timestamp, automatic  
+- `updated_at` – timestamp, automatic  
 
-**Relacje:**
-- Many-to-One z `User` (exportManager)
-- One-to-Many z `UserDistributorAssignment` (assignments)
-- One-to-Many z `SalesChannelsReport` (salesReports)
-- One-to-Many z `PurchaseReport` (purchaseReports)
+**Relations:**
+- Many-to-One with `User` (exportManager)  
+- One-to-Many with `UserDistributorAssignment` (assignments)  
+- One-to-Many with `SalesChannelsReport` (salesReports)  
+- One-to-Many with `PurchaseReport` (purchaseReports)  
 
 ---
 
 ## Model: `UserDistributorAssignment`
 
-Przypisania użytkowników do dystrybutorów (relacja many-to-many).
+User-to-distributor assignments (many-to-many relation).
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `user_id` - UUID, foreign key do User, wymagany
-- `distributor_id` - UUID, foreign key do Distributor, wymagany
-- `created_at` - timestamp, automatyczny
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `user_id` – UUID, foreign key to User, required  
+- `distributor_id` – UUID, foreign key to Distributor, required  
+- `created_at` – timestamp, automatic  
 
-**Ograniczenia:**
-- Unikalny klucz kompozytowy: (user_id, distributor_id)
-- Kaskadowe usuwanie przy usunięciu użytkownika lub dystrybutora
+**Constraints:**
+- Unique composite key: (user_id, distributor_id)  
+- Cascade delete when user or distributor is removed  
 
-**Relacje:**
-- Many-to-One z `User` (user)
-- Many-to-One z `Distributor` (distributor)
+**Relations:**
+- Many-to-One with `User` (user)  
+- Many-to-One with `Distributor` (distributor)  
 
 ---
 
 ## Model: `SalesChannelsReport`
 
-Raporty sprzedażowe według kanałów dystrybucji.
+Quarterly sales reports per channel.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `distributor_id` - UUID, foreign key do Distributor, wymagany
-- `year` - integer, wymagany
-- `quarter` - integer, wymagany, wartości 1-4
-- `currency` - string(3), kod waluty, wymagany
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `distributor_id` – UUID, foreign key to Distributor, required  
+- `year` – integer, required  
+- `quarter` – integer, required, values 1–4  
+- `currency` – string(3), ISO code, required  
 
-**Wartości sprzedażowe (waluta oryginalna):**
-- `professional_sales` - decimal(15,2), domyślnie 0
-- `pharmacy_sales` - decimal(15,2), domyślnie 0
-- `ecommerce_b2c_sales` - decimal(15,2), domyślnie 0
-- `ecommerce_b2b_sales` - decimal(15,2), domyślnie 0
-- `third_party_sales` - decimal(15,2), domyślnie 0
-- `other_sales` - decimal(15,2), domyślnie 0
-- `total_sales` - decimal(15,2), domyślnie 0
-- `new_clients` - integer, domyślnie 0
+- `professional_sales` – decimal(15,2), default 0  
+- `pharmacy_sales` – decimal(15,2), default 0  
+- `ecommerce_b2c_sales` – decimal(15,2), default 0  
+- `ecommerce_b2b_sales` – decimal(15,2), default 0  
+- `third_party_sales` – decimal(15,2), default 0  
+- `other_sales` – decimal(15,2), default 0  
+- `total_sales` – decimal(15,2), default 0  
+- `new_clients` – integer, default 0  
 
-**Wartości przeliczone na EUR:**
-- `professional_sales_eur` - decimal(15,2), nullable
-- `pharmacy_sales_eur` - decimal(15,2), nullable
-- `ecommerce_b2c_sales_eur` - decimal(15,2), nullable
-- `ecommerce_b2b_sales_eur` - decimal(15,2), nullable
-- `third_party_sales_eur` - decimal(15,2), nullable
-- `other_sales_eur` - decimal(15,2), nullable
-- `total_sales_eur` - decimal(15,2), nullable
+- `stock_level` – decimal(15,2), nullable  
+- `total_sales_eur` – decimal(15,2), nullable  
+- `currency_rate` – decimal(10,4), nullable  
 
-**Metadata:**
-- `currency_rate` - decimal(10,4), nullable, kurs do EUR
-- `created_by` - UUID, foreign key do User, nullable
-- `created_at` - timestamp, automatyczny
-- `updated_at` - timestamp, automatyczny
+- `created_by` – UUID, foreign key to User, nullable  
+- `created_at` – timestamp, automatic  
+- `updated_at` – timestamp, automatic  
 
-**Ograniczenia:**
-- Unikalny klucz kompozytowy: (distributor_id, year, quarter)
-- Walidacja: quarter między 1 a 4
+**Constraints:**
+- Unique composite key: (distributor_id, year, quarter)  
+- Validation: quarter between 1 and 4  
 
-**Relacje:**
-- Many-to-One z `Distributor` (distributor)
-- Many-to-One z `User` (createdBy)
+**Relations:**
+- Many-to-One with `Distributor` (distributor)  
+- Many-to-One with `User` (createdBy)  
+- One-to-Many with `SalesChannelsClient` (clients)  
+- One-to-Many with `SalesChannelsSkuReport` (skuReports)  
 
-**Indeksy:**
-- (distributor_id, year, quarter) - unikalny
-- (distributor_id, created_at) - wydajność
+---
+
+## Model: `SalesChannelsClient`
+
+Stores client names per sales channel in reports.
+
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `report_id` – UUID, foreign key to SalesChannelsReport, cascade delete  
+- `channel` – string (e.g. Professional, Pharmacy, Ecommerce B2C/B2B, Third party, Other)  
+- `client_name` – string, required  
+
+---
+
+## Model: `SalesChannelsSkuReport`
+
+Stores monthly SKU-level sales data per report.
+
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `report_id` – UUID, foreign key to SalesChannelsReport, cascade delete  
+- `sku` – string(50), required  
+- `month` – integer, 1–12  
+- `sales_value` – decimal(15,2), required  
+- `sales_quantity` – integer, required  
+
+**Constraints:**
+- Unique composite key: (report_id, sku, month)  
 
 ---
 
 ## Model: `PurchaseReport`
 
-Raporty zakupowe i dane o punktach sprzedaży.
+Quarterly purchase reports and POS data.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `distributor_id` - UUID, foreign key do Distributor, wymagany
-- `year` - integer, wymagany
-- `quarter` - integer, wymagany, wartości 1-4
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `distributor_id` – UUID, foreign key to Distributor, required  
+- `year` – integer, required  
+- `quarter` – integer, required, values 1–4  
 
-**Dane finansowe:**
-- `last_year_sales` - decimal(15,2), domyślnie 0
-- `purchases` - decimal(15,2), domyślnie 0
-- `budget` - decimal(15,2), domyślnie 0
-- `actual_sales` - decimal(15,2), domyślnie 0 (synchronizowane z `SalesChannelsReport.total_sales`)
+- `last_year_sales` – decimal(15,2), default 0  
+- `purchases` – decimal(15,2), default 0  
+- `budget` – decimal(15,2), default 0  
+- `actual_sales` – decimal(15,2), default 0 (synced with SalesChannelsReport.total_sales)  
 
-**Punkty sprzedaży:**
-- `total_pos` - integer, domyślnie 0 (total points of sale)
-- `new_openings` - integer, domyślnie 0
-- `new_openings_target` - integer, domyślnie 0
+- `total_pos` – integer, default 0  
+- `new_openings` – integer, default 0  
+- `new_openings_target` – integer, default 0  
 
-**Metadata:**
-- `created_by` - UUID, foreign key do User, nullable
-- `created_at` - timestamp, automatyczny
-- `updated_at` - timestamp, automatyczny
+- `created_by` – UUID, foreign key to User, nullable  
+- `created_at` – timestamp, automatic  
+- `updated_at` – timestamp, automatic  
 
-**Ograniczenia:**
-- Unikalny klucz kompozytowy: (distributor_id, year, quarter)
-- Walidacja: quarter między 1 a 4
+**Constraints:**
+- Unique composite key: (distributor_id, year, quarter)  
+- Validation: quarter between 1 and 4  
 
-**Relacje:**
-- Many-to-One z `Distributor` (distributor)
-- Many-to-One z `User` (createdBy)
-
-**Indeksy:**
-- (distributor_id, year, quarter) - unikalny
+**Relations:**
+- Many-to-One with `Distributor` (distributor)  
+- Many-to-One with `User` (createdBy)  
 
 ---
 
 ## Model: `MediaCategory`
 
-Kategorie plików w repozytorium mediów.
+Categories for media repository.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `name` - string(100), unikalny, wymagany
-- `path` - string(255), unikalny, wymagany (ścieżka w storage)
-- `description` - text, nullable
-- `is_active` - boolean, domyślnie true
-- `created_at` - timestamp, automatyczny
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `name` – string(100), unique, required  
+- `path` – string(255), unique, required (storage path)  
+- `description` – text, nullable  
+- `is_active` – boolean, default true  
+- `created_at` – timestamp, automatic  
 
-**Relacje:**
-- One-to-Many z `MediaFile` (files)
+**Relations:**
+- One-to-Many with `MediaFile` (files)  
 
 ---
 
 ## Model: `MediaFile`
 
-Metadane plików w repozytorium mediów.
+Metadata for media repository files.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `filename` - string(255), wymagany (nazwa pliku w storage)
-- `original_filename` - string(255), wymagany (oryginalna nazwa)
-- `storage_path` - string(500), wymagany (pełna ścieżka do pliku)
-- `file_size` - bigint, wymagany (rozmiar w bajtach)
-- `mime_type` - string(100), wymagany
-- `category_id` - UUID, foreign key do MediaCategory, nullable
-- `sku` - string(50), nullable (numer produktu)
-- `tags` - array of strings, nullable (tagi do wyszukiwania)
-- `description` - text, nullable
-- `is_active` - boolean, domyślnie true
-- `uploaded_by` - UUID, foreign key do User, nullable
-- `created_at` - timestamp, automatyczny
-- `updated_at` - timestamp, automatyczny
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `filename` – string(255), required (storage file name)  
+- `original_filename` – string(255), required  
+- `storage_path` – string(500), required  
+- `file_size` – bigint, required (bytes)  
+- `mime_type` – string(100), required  
+- `category_id` – UUID, foreign key to MediaCategory, nullable  
+- `sku` – string(50), nullable  
+- `tags` – array of strings, nullable  
+- `description` – text, nullable  
+- `is_active` – boolean, default true  
+- `uploaded_by` – UUID, foreign key to User, nullable  
+- `created_at` – timestamp, automatic  
+- `updated_at` – timestamp, automatic  
 
-**Relacje:**
-- Many-to-One z `MediaCategory` (category)
-- Many-to-One z `User` (uploadedBy)
+**Relations:**
+- Many-to-One with `MediaCategory` (category)  
+- Many-to-One with `User` (uploadedBy)  
 
-**Indeksy:**
-- (sku) - wydajność wyszukiwania
-- (category_id) - wydajność filtrowania
-- (created_at) - sortowanie
+**Indexes:**
+- sku  
+- category_id  
+- created_at  
 
 ---
 
 ## Model: `UserActivityLog`
 
-Logi aktywności użytkowników.
+Logs of user activity.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `user_id` - UUID, foreign key do User, nullable
-- `action` - string(50), wymagany (typ akcji)
-- `resource_type` - string(50), nullable (typ zasobu)
-- `resource_id` - UUID, nullable (ID zasobu)
-- `ip_address` - string, nullable (adres IP)
-- `user_agent` - text, nullable
-- `details` - JSON object, nullable (dodatkowe szczegóły)
-- `created_at` - timestamp, automatyczny
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `user_id` – UUID, foreign key to User, nullable  
+- `action` – enum (UserAction), required  
+- `resource_type` – string(50), nullable  
+- `resource_id` – UUID, nullable  
+- `ip_address` – string, nullable  
+- `user_agent` – text, nullable  
+- `details` – JSON object, nullable  
+- `created_at` – timestamp, automatic  
 
-**Przykładowe akcje:**
-- LOGIN, LOGOUT
-- CREATE_SALES_REPORT, UPDATE_SALES_REPORT
-- CREATE_PURCHASE_REPORT, UPDATE_PURCHASE_REPORT
-- UPLOAD_FILE, DOWNLOAD_FILE
-- EXPORT_DATA
+**Relations:**
+- Many-to-One with `User` (user)  
 
-**Relacje:**
-- Many-to-One z `User` (user)
-
-**Indeksy:**
-- (user_id, created_at) - zapytania per użytkownik
-- (action, created_at) - zapytania per akcja
-- (created_at) - sortowanie chronologiczne
+**Indexes:**
+- (user_id, created_at)  
+- (action, created_at)  
+- (created_at)  
 
 ---
 
 ## Model: `CurrencyRate`
 
-Kursy walut do przeliczania na EUR.
+Exchange rates to EUR.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `currency_code` - string(3), wymagany (kod ISO waluty)
-- `rate_date` - date, wymagany (data kursu)
-- `rate_to_eur` - decimal(10,4), wymagany (kurs do EUR)
-- `source` - string(50), domyślnie 'NBP' (źródło kursu)
-- `created_at` - timestamp, automatyczny
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `currency_code` – string(3), required  
+- `rate_date` – date, required  
+- `rate_to_eur` – decimal(10,4), required  
+- `source` – string(50), default 'NBP'  
+- `created_at` – timestamp, automatic  
 
-**Ograniczenia:**
-- Unikalny klucz kompozytowy: (currency_code, rate_date)
+**Constraints:**
+- Unique composite key: (currency_code, rate_date)  
 
-**Indeksy:**
-- (currency_code, rate_date DESC) - wydajność pobierania najnowszego kursu
+**Indexes:**
+- (currency_code, rate_date DESC)  
 
 ---
 
 ## Model: `ExportManagerSubstitution`
 
-System zastępstw dla Export Managerów.
+Substitution system for Export Managers.
 
-**Kolumny:**
-- `id` - UUID, klucz główny, generowany automatycznie
-- `export_manager_id` - UUID, foreign key do User, wymagany
-- `substitute_id` - UUID, foreign key do User, wymagany
-- `start_date` - date, wymagany
-- `end_date` - date, wymagany
-- `is_active` - boolean, domyślnie true
-- `created_by` - UUID, foreign key do User, nullable
-- `created_at` - timestamp, automatyczny
+**Columns:**
+- `id` – UUID, primary key, auto-generated  
+- `export_manager_id` – UUID, foreign key to User, required  
+- `substitute_id` – UUID, foreign key to User, required  
+- `start_date` – date, required  
+- `end_date` – date, required  
+- `is_active` – boolean, default true  
+- `created_by` – UUID, foreign key to User, nullable  
+- `created_at` – timestamp, automatic  
 
-**Ograniczenia:**
-- Walidacja: start_date <= end_date
-- Walidacja: export_manager_id != substitute_id
+**Constraints:**
+- start_date ≤ end_date  
+- export_manager_id ≠ substitute_id  
 
-**Relacje:**
-- Many-to-One z `User` (exportManager)
-- Many-to-One z `User` (substitute)
-- Many-to-One z `User` (createdBy)
+**Relations:**
+- Many-to-One with `User` (exportManager)  
+- Many-to-One with `User` (substitute)  
+- Many-to-One with `User` (createdBy)  
 
-**Indeksy:**
-- (export_manager_id, start_date, end_date) - wydajność sprawdzania zastępstw
+**Indexes:**
+- (export_manager_id, start_date, end_date)  
 
 ---
 
-## Relacje między modelami
+## Relations between models
 
-### Hierarchia ról i dostępu:
-```
+### Role hierarchy and access:
 SUPER_ADMIN
-    ↓ może zarządzać
+↓ manages
 ADMIN
-    ↓ może zarządzać  
+↓ manages
 EXPORT_MANAGER
-    ↓ ma przypisanych
+↓ assigned
 DISTRIBUTOR/EMPLOYEE
-```
 
-### Kluczowe związki:
+### Key relations:
 
-**1. User ↔ Distributor (Many-to-Many)**
-- Przez model `UserDistributorAssignment`
-- Użytkownik może być przypisany do wielu dystrybutorów
-- Dystrybutor może mieć wielu użytkowników
+**1. User ↔ Distributor (Many-to-Many)**  
+- Via `UserDistributorAssignment`  
+- A user can be assigned to many distributors  
+- A distributor can have many users  
 
-**2. Export Manager → Distributors (One-to-Many)**
-- `Distributor.export_manager_id` → `User.id`
-- Jeden Export Manager może mieć wielu dystrybutorów
-- Dystrybutor ma jednego Export Managera
+**2. Export Manager → Distributors (One-to-Many)**  
+- `Distributor.export_manager_id` → `User.id`  
+- One Export Manager can manage many distributors  
+- A distributor has one Export Manager  
 
-**3. Distributor → Reports (One-to-Many)**
-- `SalesChannelsReport.distributor_id` → `Distributor.id`
-- `PurchaseReport.distributor_id` → `Distributor.id`
-- Dystrybutor ma wiele raportów (po jednym na kwartał)
+**3. Distributor → Reports (One-to-Many)**  
+- `SalesChannelsReport.distributor_id` → `Distributor.id`  
+- `PurchaseReport.distributor_id` → `Distributor.id`  
+- A distributor has multiple reports (one per quarter)  
 
-**4. User → Activity Logs (One-to-Many)**
-- `UserActivityLog.user_id` → `User.id`
-- Użytkownik ma wiele logów aktywności
+**4. User → Activity Logs (One-to-Many)**  
+- `UserActivityLog.user_id` → `User.id`  
+- A user has multiple activity logs  
 
-**5. Media Relations**
-- `MediaFile.category_id` → `MediaCategory.id`
-- `MediaFile.uploaded_by` → `User.id`
+**5. Media Relations**  
+- `MediaFile.category_id` → `MediaCategory.id`  
+- `MediaFile.uploaded_by` → `User.id`  
 
-### Reguły integralności danych:
+### Data integrity rules:
 
-**Kaskadowe operacje:**
-- Usunięcie użytkownika → usunięcie jego przypisań (`UserDistributorAssignment`)
-- Usunięcie dystrybutora → usunięcie przypisań
+**Cascade operations:**  
+- Deleting a user → deletes their assignments (`UserDistributorAssignment`)  
+- Deleting a distributor → deletes its assignments  
 
-**Ograniczenia biznesowe:**
-- Raport sprzedażowy: jeden na dystrybutor/rok/kwartał
-- Raport zakupowy: jeden na dystrybutor/rok/kwartał
-- Kursy walut: jeden kurs na walutę/datę
-- Zastępstwa: data_od <= data_do, różne osoby
+**Business constraints:**  
+- Sales report: one per distributor/year/quarter  
+- Purchase report: one per distributor/year/quarter  
+- Currency rate: one per currency/date  
+- Substitution: start_date ≤ end_date, different users  
 
-**Walidacje:**
-- Quarter: wartości 1-4
-- Email: unikalny w systemie
-- Currency codes: format ISO (3 znaki)
-- Country codes: format ISO (2 znaki)
+**Validations:**  
+- Quarter: values 1–4  
+- Email: unique in system  
+- Currency codes: ISO format (3 letters)  
+- Country codes: ISO format (2 letters)  
 
----
+## Initial Data Seeding
 
-## Dane inicjalne i seedowanie
+This section describes how to seed the database with initial users and distributors.
 
-### Wymagane dane startowe:
+**Super Administrator:**
+- Email: `admin@b2bportal.com`
+- Role: `SUPER_ADMIN`
+- Password: set via seeding script
+- Created if not already existing
 
-**1. Super Administrator**
-```
-email: admin@company.com
-role: SUPER_ADMIN
-must_change_password: false
-is_active: true
-```
+**Demo Users:**
+| Email                     | Role           | First Name | Last Name |
+|----------------------------|----------------|------------|-----------|
+| employee@demo.com          | EMPLOYEE       | John       | Employee  |
+| distributor@demo.com       | DISTRIBUTOR    | Jane       | Distributor |
+| distributor2@demo.com      | DISTRIBUTOR    | Jack       | Distributor |
+| exportmanager@demo.com     | EXPORT_MANAGER | Mike       | Manager   |
+| exportmanager2@demo.com    | EXPORT_MANAGER | Marta      | Manager   |
+| admin@demo.com             | ADMIN          | Alice      | Admin     |
 
-**2. Kategorie mediów**
-```
-PRODUCTS:
-  name: "Products"
-  path: "products"
-  description: "Product files organized by SKU"
+**Demo Distributors:**
+1. **Demo Distributor 1**
+   - Country: `PL`
+   - Currency: `PLN`
+   - Export Manager: `exportmanager@demo.com`
+   - Assigned Users: `distributor@demo.com`
+2. **Demo Distributor 2**
+   - Country: `EN`
+   - Currency: `USD`
+   - Export Manager: `exportmanager2@demo.com`
+   - Assigned Users: `distributor2@demo.com`
 
-MARKETING:
-  name: "Marketing" 
-  path: "marketing"
-  description: "Marketing materials organized by date"
-```
+**Seeding logic highlights:**
+- Creates super admin if not present  
+- Creates demo users only if they do not exist  
+- Creates demo distributors only if they do not exist  
+- Assigns users to distributors through `UserDistributorAssignment`  
+- Uses Nest.js `UsersService` and TypeORM repositories for creation  
 
-**3. Podstawowe kursy walut**
-- EUR/EUR = 1.0000 (stały kurs bazowy)
-- Inne waluty pobierane z API NBP
-
-### Struktura katalogów plików:
-
-```
-uploads/
-├── products/
-│   ├── SKU001/
-│   │   ├── SKU001_main_1.jpg
-│   │   ├── SKU001_detail_1.jpg
-│   │   └── SKU001_manual.pdf
-│   └── SKU002/
-│       └── SKU002_main_1.jpg
-└── marketing/
-    ├── 2025_01/
-    │   └── winter_campaign_SKU001_SKU002.jpg
-    └── 2025_02/
-        └── spring_sale_2025.pdf
-```
-
-### Konwencje nazewnictwa plików:
-
-**Produkty:** `{SKU}_{function}_{number}.{ext}`
-- Przykład: `SKU123_main_1.jpg`, `SKU123_manual.pdf`
-
-**Kampanie:** `{campaign_name}_{SKU1}_{SKU2}.{ext}`
-- Przykład: `spring_sale_SKU123_SKU222.jpg`
-
-**Dokumenty:** `{SKU}_{document_type}.{ext}`
-- Przykład: `SKU123_ingredients.pdf`
-
-### Przykład danych testowych:
-
-**Dystrybutor:**
-```
-company_name: "Test Distributor Sp. z o.o."
-country: "PL"
-currency: "PLN"
-```
-
-**Użytkownik dystrybutora:**
-```
-email: "distributor@test.com"
-role: "DISTRIBUTOR"
-first_name: "Jan"
-last_name: "Kowalski"
-```
-
-**Export Manager:**
-```
-email: "manager@company.com"
-role: "EXPORT_MANAGER"
-first_name: "Anna"
-last_name: "Nowak"
-```
+**Execution:**
+- Run the seeding script in the application context  
+- Logs status for each user and distributor created  
+- Ensures idempotency: running multiple times will not duplicate records  

@@ -1,123 +1,168 @@
-# Analiza wymagań
+# Requirements Analysis
 
-## Cele biznesowe
-- Pozyskanie dokładnych danych o wynikach sprzedaży od dystrybutorów
-- Możliwość porównywania bieżących wyników z danymi historycznymi i budżetami
-- Monitorowanie liczby nowych punktów sprzedaży
-- Usprawnienie zarządzania relacjami biznesowymi z partnerami
-- Centralny dostęp do materiałów marketingowych i produktowych
+## Business Goals
+- Obtain accurate sales results data from distributors
+- Enable comparison of current results with historical data and budgets
+- Monitor the number of new points of sale
+- Improve business relationship management with partners
+- Central access to marketing and product materials
 
-## Role użytkowników
+## User Roles
 
-1. **Pracownik dystrybutora** 
-   - Ograniczony dostęp, bez wglądu w dane umowy i szczegółowe wyniki sprzedażowe
+### 1. Distributor Employee
+- Limited access – no visibility into contract details or detailed sales results
 
-2. **Dystrybutor** 
-   - Dostęp tylko do własnych danych i formularzy
-   - Może wprowadzać dane sprzedażowe i pobierać materiały
+### 2. Distributor
+- Access only to their own data and forms
+- Can enter sales data and download materials
 
-3. **Export Manager** 
-   - Dostęp do danych przypisanych dystrybutorów
-   - Może wprowadzać budżety i cele sprzedażowe
-   - Może filtrować i eksportować dane
+### 3. Export Manager
+- Access to data for assigned distributors
+- Can set budgets and sales targets
+- Can filter and export data
 
-4. **Administrator** 
-   - Pełny dostęp do danych wszystkich dystrybutorów
-   - Może eksportować dane wszystkich dystrybutorów
+### 4. Administrator
+- Full access to all distributor data
+- Can export data for all distributors
+- Can select any distributor to view their reports
 
-5. **Super-administrator** 
-   - Wszystkie uprawnienia administratora
-   - Zarządzanie kontami użytkowników
-   - Dostęp do logów aktywności
+### 5. Super-Administrator
+- All administrator permissions
+- User account management
+- Access to activity logs
 
-## Moduły systemu
+## System Modules
 
-### Logowanie i autoryzacja
-- System ról z 5 poziomami dostępu
-- Bezpieczeństwo:
-  - Wymuszenie zmiany hasła przy pierwszym logowaniu
-  - Wymagania dla haseł: min. 8 znaków, 1 znak specjalny, 1 cyfra
-  - Blokada konta po 3 nieudanych próbach logowania
-  - Hierarchiczny system odblokowywania kont
-  - Szyfrowanie HTTPS
-  - Rejestracja aktywności użytkowników
+### Login and Authorization
+- Role-based system with 5 access levels
+- Security:
+  - Force password change on first login
+  - Password requirements: min. 8 characters, 1 special character, 1 digit
+  - Account lockout after 3 failed login attempts
+  - Hierarchical account unlocking system
+  - HTTPS encryption
+  - User activity logging
+  - Administrator can suspend accounts
 
 ### SALES CHANNELS
-- Raportowanie kwartalne sprzedaży w podziale na kanały:
+
+- Quarterly sales reporting broken down by channel:
   - Professional sales
   - Pharmacy sales
   - E-commerce B2C
   - E-commerce B2B
   - Third party
   - Other
-- Funkcjonalności:
-  - Automatyczne sumowanie (Total sales)
-  - Pole na nowych klientów (New clients)
-  - Automatyczne przeliczanie na EUR według kursu NBP
-  - Import danych do formularza
-  - Raportowanie stanów magazynowych
-  - Lista klientów w podziale na kanały
-  - Sprzedaż miesięczna per SKU
+- Features:
+  - Automatic summing of all channels (Total sales)
+  - Field for new clients (New clients)
+  - CSV file import
+  - Customer lists by channel (optional)
+  - Monthly report per SKU (optional)
+  - Automatic conversion to EUR according to NBP rate
 
 ### PURCHASE REPORT
-- Raportowanie danych zakupowych i punktów sprzedaży
-- Pola danych:
-  - Last Year Sales (dane historyczne)
-  - Purchases (wartość zakupów)
-  - Budget (ustalony budżet)
-  - Actual Sales (pobierane z SALES CHANNELS)
-- Automatyczne obliczenia:
-  - Porównanie rok do roku
-  - Porównanie do budżetu
-- Dane o punktach sprzedaży:
-  - Total POS
-  - New openings
-  - New openings target
-- Dashboard z wizualizacją danych
+
+- Module available only for roles: Export Manager, Administrator, Super-Administrator
+- Reporting of purchase data and points of sale
+
+#### Data Fields:
+- Last Year Sales – sales in the same quarter last year
+- Purchases – distributor purchase value
+- Budget – defined sales budget
+- Actual Sales – automatically pulled from Sales Channels module
+- Total POS – number of points of sale
+- New Openings – new points of sale in the quarter
+- New Openings Target – planned number of new points of sale
+
+#### Automatic Calculations:
+- Year-over-year comparison (TotalYearVsLastYear)
+- Comparison to budget (TotalYearVsBudget)
+
+#### Dashboard:
+- Visualization of quarterly data as bar charts
+- Channels: Actual Sales, Budget, Last Year Sales, Purchases
+
+#### Notes:
+- Distributor must be selected before editing or saving data
+- All data updates after saving the report or changing the distributor selection
 
 ### MEDIA
-- Repozytorium materiałów marketingowych i produktowych
-- Funkcjonalności:
-  - Przeglądanie i pobieranie plików
-  - Wyszukiwanie po numerze SKU
-  - Sortowanie (data, rozmiar, typ)
-  - Pobieranie pojedynczych plików lub paczkami
-- Struktura katalogów:
-  - `/PRODUCTS/` - podkatalogi per SKU
-  - `/MARKETING/` - podkatalogi per miesiąc
-- Konwencje nazewnictwa:
-  - Produkty: `SKU123_function_number.extension`
-  - Kampanie: `campaign_name_SKU123_SKU222.extension`
-  - Dokumenty: `SKU123_document_type.extension`
 
-### Panel administracyjny
-- Przegląd danych wszystkich/przypisanych dystrybutorów
-- Filtry według kraju i dystrybutora
-- System zastępstw Export Managerów
-- Eksport danych do CSV (UTF-8) z predefiniowanymi nazwami kolumn
-- Logi aktywności (tylko super-administrator)
+- Repository for marketing and product materials
+- Access to view, download, and search files
 
-## Wymagania techniczne
+#### Features:
+- Browse files in grid or list view
+- Download single files or multiple files as a package
+- Search by:
+  - File name
+  - SKU
+  - Tags
+  - Category
+- Sort files by:
+  - Creation date (oldest/newest)
+  - File name (A-Z / Z-A)
+  - File size (largest/smallest)
 
-### Stack technologiczny
+#### File Upload:
+- Upload files with optional assignment of:
+  - SKU
+  - Category
+  - Tags
+  - Description
+- Create new categories (unique path + name + description)
+
+#### Example folder structure:
+- `/PRODUCTS/` – subfolders per SKU
+- `/MARKETING/` – subfolders per month
+
+#### Additional Notes:
+- Ability to select multiple files for download
+- Display basic file information: size, date, SKU, category, tags, uploader
+- Pagination support for large file sets
+
+### Admin Panel
+
+The admin panel is divided into three modules:
+
+#### 1. User Management
+- Overview of all system users with role and status information
+- Hierarchical account unlocking
+- User account management: activation/deactivation and unlocking
+- Add new users (Admin / Superadmin only)
+
+#### 2. Export Manager Panel
+- Overview of distributors assigned to Export Managers
+- Information about company, country, currency, assigned Export Manager, and status
+- Admin / Superadmin: full access to all distributors and substitutes, ability to create/deactivate substitutes, export full or assigned data
+- Export Manager: access only to assigned distributors, no access to substitutes, ability to export assigned distributor data
+
+#### 3. Activity Logs
+- View system activity logs with filters by user, action, and time range
+- Export logs to CSV (UTF-8) with predefined columns (Superadmin only)
+
+## Technical Requirements
+
+### Technology Stack
 - **Frontend**: React
 - **Backend**: Nest.js (Node.js + TypeScript)
-- **Baza danych**: PostgreSQL
+- **Database**: PostgreSQL
 - **ORM**: TypeORM
-- **Autoryzacja**: JWT + role-based access control
+- **Authorization**: JWT + role-based access control
 
-### Wymagania wydajnościowe
-- Obsługa ~80 użytkowników na start
-- Typowe obciążenie: 1-2 jednoczesnych użytkowników
-- Responsywny design (głównie desktop)
+### Performance Requirements
+- Support ~80 users initially
+- Typical load: 1-2 simultaneous users
+- Responsive design (mainly desktop)
 
-### Kompatybilność
-- Przeglądarki: Chrome, Firefox, Safari, Edge (najnowsze wersje)
-- HTTPS wymagane dla wszystkich połączeń
+### Compatibility
+- Browsers: Chrome, Firefox, Safari, Edge (latest versions)
+- HTTPS required for all connections
 
-## Wymagania bezpieczeństwa
-- Szyfrowanie danych w tranzycie (HTTPS) i spoczynku
-- Hashowanie haseł
-- Mechanizmy blokady kont
-- Audyt aktywności użytkowników
-- Hierarchiczny system uprawnień
+## Security Requirements
+- Data encryption in transit (HTTPS) and at rest
+- Password hashing
+- Account lockout mechanisms
+- User activity audit
+- Hierarchical permissions system
